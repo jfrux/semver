@@ -1,8 +1,7 @@
-component name="semver" {
+component name="semver" extends="foundry.core" {
   public semver function init() {
-    variables.RegExp = require("RegExp");
-    variables._ = require("UnderscoreCF");
-
+    variables.RegExp = require("regexp");
+    variables._ = new foundry.core.util();
     // See http://semver.org/
     // This implementation is a *hair* less strict in that it allows
     // v1.2.3 things, and also tags that don't begin with a char.
@@ -21,13 +20,12 @@ component name="semver" {
     var exprSpermy = "(?:~>?)"&xRange;
 
     this.expressions =
-        { parse : new RegExp("^\\s*"&semver&"\\s*$")
-        , parsePackage : new RegExp("^\\s*([^\/]+)[-@](" &semver&")\\s*$")
-        , parseRange : new RegExp(
-            "^\\s*(" + semver + ")\\s+-\\s+(" & semver & ")\\s*$")
-        , validComparator : new RegExp("^"&exprComparator&"$")
-        , parseXRange : new RegExp("^"&xRange&"$")
-        , parseSpermy : new RegExp("^"&exprSpermy&"$")
+        { parse : RegExp.init("^\\s*"&semver&"\\s*$")
+        , parsePackage : new foundry.core.RegExp("^\\s*([^\/]+)[-@](" &semver&")\\s*$")
+        , parseRange : new foundry.core.RegExp("^\\s*(" & semver & ")\\s+-\\s+(" & semver & ")\\s*$")
+        , validComparator : new foundry.core.RegExp("^"&exprComparator&"$")
+        , parseXRange : new foundry.core.RegExp("^"&xRange&"$")
+        , parseSpermy : new foundry.core.RegExp("^"&exprSpermy&"$")
         }
 
 
@@ -73,33 +71,37 @@ component name="semver" {
   }
 
   public any function stringify (version) {
-    var v = version
-    return [v[1]||'', v[2]||'', v[3]||''].join(".") + (v[4]||'') + (v[5]||'')
+    var v = version;
+    return arrayToList([v[1]||'', v[2]||'', v[3]||''],".") & (v[4]||'') & (v[5]||'');
   }
 
   public any function clean (version) {
-    version = this.parse(version)
-    if (!version) return version
-    return stringify(version)
+    version = this.parse(version);
+    if (!version) return version;
+    return stringify(version);
   }
 
   public any function valid (version) {
-    if (typeof version NEQ "string") return null
-    return this.parse(version) && version.trim().replace(/^[v=]+/, '')
+    if (!_.isString(version)) return null;
+    parsedVersion = this.parse(version);
+    version = trim(version);
+    version = reReplace(version,"^[v=]+","");
+    return parsedVersion && version;
   }
 
   public any function validPackage (version) {
-    if (typeof version NEQ "string") return null
-    return version.match(expressions.parsePackage) && version.trim()
+    if (!_.isString(version)) return null;
+    var matchedVersion = expressions.parsePackage.match(version);
+    return matchedVersion && trim(version);
   }
 
   function toComparators (range) {
-    var ret = trim((range || ""))
-    ret = replace(expressions.parseRange, this.rangeReplace)
-    ret = replace(compTrimExpression, compTrimReplace)
-    ret = _.split(ret,/\s+/)
-    ret = _.join(ret," ")
-    ret = _.split(ret,"||")
+    var ret = trim((range || ""));
+    ret = expressions.parseRange.replace(ret, this.rangeReplace);
+    ret = compTrimExpression.replace(ret, compTrimReplace);
+    ret = _.split(ret,"\s+");
+    ret = _.join(ret," ");
+    ret = _.split(ret,"||");
     ret = _.map(ret,function (orchunk) {
               orchunk = _.split(orchunk," ");
               orchunk = _.map(orchunk,replaceXRanges);
@@ -122,7 +124,7 @@ component name="semver" {
 
   function replaceStars (stars) {
     stars = trim(stars);
-    stars = replace(starExpression,starReplace);
+    stars = starExpression.replace(stars,starReplace);
 
     return stars;
   }
@@ -156,9 +158,9 @@ component name="semver" {
           // append "-" onto the version, otherwise
           // "1.x.x" matches "2.0.0beta", since the tag
           // *lowers* the version value
-          ret = ">="&M&".0.0- <"&(&M&1)&".0.0-";
+          ret = ">=" & M & ".0.0- <" & (M + 1) & ".0.0-";
         } else if (!p || p EQ "*" || LCase(p) EQ "x") {
-          ret = ">="&M&"."&m&".0- <"&M&"."&(&m&1)&".0-";
+          ret = ">="&M&"."&m&".0- <"&M&"." & (m+1) & ".0-";
         }
         //console.error("parseXRange", [].slice.call(arguments), ret)
         return ret;
@@ -185,15 +187,15 @@ component name="semver" {
       }
       // ~1 == >=1.0.0- <2.0.0-
       if (!m || LCase(m) EQ "x") {
-        return ">="&M&".0.0- <"&(&M&1)&".0.0-";
+        return ">="&M&".0.0- <"& (M + 1) & ".0.0-";
       }
       // ~1.2 == >=1.2.0- <1.3.0-
       if (!p || LCase(p) EQ "x") {
-        return ">="&M&"."&m&".0- <"&M&"."&(&m&1)&".0-";
+        return ">="&M&"."&m&".0- <"&M&"."& (m + 1) & ".0-";
       }
       // ~1.2.3 == >=1.2.3- <1.3.0-
       t = t || "-"
-      return ">="&M&"."&m&"."&p&t&" <"&M&"."&(&m&1)&".0-";
+      return ">="&M&"."&m&"."&p&t&" <"&M&"."&(m+1)&".0-";
       });
       
       return version;
@@ -202,14 +204,12 @@ component name="semver" {
   function validRange (range) {
     range = replaceStars(range);
     var c = toComparators(range);
-    return (len(c) EQ 0)
-         ? null
-         : _.join(_.map(c,function (c) { return _.join(c," ") }),"||")
+    return (len(c) EQ 0) ? null : _.join(_.map(c,function (c) { return _.join(c," "); }),"||");
   }
 
   // returns the highest satisfying version in the list, or undefined
   function maxSatisfying (versions, range) {
-    versions = _.filter(versions,function(v) { return satisfies(v,range) });
+    versions = _.filter(versions,function(v) { return satisfies(v,range); });
     versions = _.sort(compare);
     versions = new foundry.array(versions);
 
@@ -220,9 +220,18 @@ component name="semver" {
     version = valid(version);
     if (!version) return false;
     range = toComparators(range);
-    for (var i = 0, l = range.length ; i < l ; i ++) {
+    
+    var i = 0;
+    var l = arrayLen(range);
+
+    while (i < l) {
+      i++;
       var ok = false;
-      for (var j = 0, ll = range[i].length ; j < ll ; j ++) {
+      var j = 0;
+      var ll = arrayLen(range[i]);
+
+      while (j < ll) {
+        j++;
         var r = range[i][j];
         var gtlt = left(r,1) EQ ">" ? gt : left(r,1) EQ "<" ? lt : false;
         var eq = r.charAt(!!gtlt) EQ "=";
@@ -242,19 +251,19 @@ component name="semver" {
 
   // return v1 > v2 ? 1 : -1
   function compare (v1, v2) {
-    var g = gt(v1, v2)
-    return ((g EQ null) ? 0 : g) ? 1 : -1
+    var g = gt(v1, v2);
+    return ((g EQ null) ? 0 : g) ? 1 : 0;
   }
 
   function rcompare (v1, v2) {
-    return compare(v2, v1)
+    return compare(v2, v1);
   }
 
-  function lt (v1, v2) { return gt(v2, v1) }
-  function gte (v1, v2) { return !lt(v1, v2) }
-  function lte (v1, v2) { return !gt(v1, v2) }
-  function eq (v1, v2) { return (gt(v1, v2) EQ null) }
-  function neq (v1, v2) { return (gt(v1, v2) NEQ null) }
+  function lt (v1, v2) { return gt(v2, v1); }
+  function gte (v1, v2) { return !lt(v1, v2); }
+  function lte (v1, v2) { return !gt(v1, v2); }
+  function eq (v1, v2) { return (gt(v1, v2) EQ null); }
+  function neq (v1, v2) { return (gt(v1, v2) NEQ null); }
   function cmp (v1, c, v2) {
     switch (c) {
       case ">": return gt(v1, v2);
@@ -271,7 +280,7 @@ component name="semver" {
 
   // return v1 > v2
   function num (v) {
-    return (isDefined(v) ? 0 : reReplace(v||"0","[^0-9]+",""), 10);
+    return (isDefined(v) ? 0 : reReplace(v||"0","[^0-9]+","", 10));
   }
 
   function gt (v1, v2) {
@@ -282,7 +291,7 @@ component name="semver" {
     for (var i = 1; i < 5; i ++) {
       v1[i] = num(v1[i]);
       v2[i] = num(v2[i]);
-      if (v1[i] > v2[i]) return true
+      if (v1[i] > v2[i]) return true;
       else if (v1[i] NEQ v2[i]) return false;
     }
     // no tag is > than any tag, or use lexicographical order.
@@ -294,7 +303,7 @@ component name="semver" {
     return (((tag1 EQ tag2) ? null
                    : !tag1) ? true
                : !tag2) ? false
-           : tag1 > tag2
+           : tag1 > tag2;
   }
 
   function inc (version, release) {
@@ -323,14 +332,3 @@ component name="semver" {
     return stringify(version);
   }
 }
-
-
-
-
-
-
-
-
-
-
-})(typeof exports EQ "object" ? exports : semver = {})
