@@ -19,17 +19,16 @@ component name="semver" extends="foundry.core" {
     var xRange = "((?:<|>)=?)?\\s*" & xRangePlain;
     var exprSpermy = "(?:~>?)"&xRange;
 
-    this.expressions =
-        { parse : RegExp.init("^\\s*"&semver&"\\s*$")
-        , parsePackage : new foundry.core.RegExp("^\\s*([^\/]+)[-@](" &semver&")\\s*$")
-        , parseRange : new foundry.core.RegExp("^\\s*(" & semver & ")\\s+-\\s+(" & semver & ")\\s*$")
-        , validComparator : new foundry.core.RegExp("^"&exprComparator&"$")
-        , parseXRange : new foundry.core.RegExp("^"&xRange&"$")
-        , parseSpermy : new foundry.core.RegExp("^"&exprSpermy&"$")
-        }
+    this.expressions = { 
+      parse : RegExp.init("^\\s*"&semver&"\\s*$")
+        ,parsePackage : RegExp.init("^\\s*([^\/]+)[-@](" &semver&")\\s*$")
+        ,parseRange : RegExp.init("^\\s*(" & semver & ")\\s+-\\s+(" & semver & ")\\s*$")
+        ,validComparator : RegExp.init("^"&exprComparator&"$")
+        ,parseXRange : RegExp.init("^"& xRange &"$")
+        ,parseSpermy : RegExp.init("^"&exprSpermy&"$")
+     }
 
-
-    _.forEach(structKeyList(this.expressions),function (i) {
+    _.forEach(structKeyList(this.expressions),function(i) {
       this[i] = function (str) {
         return expressions[i].match("" & (str || ""));
       }
@@ -65,9 +64,11 @@ component name="semver" extends="foundry.core" {
     // ">1.0.2 <2.0.0" like 1.0.3 - 1.9999.9999
     variables.starExpression = "(<|>)?=?\s*\*";
     variables.starReplace = "";
-    variables.compTrimExpression = new RegExp("((<|>)?=?)\\s*("
+    variables.compTrimExpression = RegExp.init("((<|>)?=?)\\s*("
                                         &semver&"|"&xRangePlain&")", "g");
     variables.compTrimReplace = "$1$3";
+
+    return this;
   }
 
   public any function stringify (version) {

@@ -1,5 +1,5 @@
-component name="testSemver" extends="mxunit.framework.TestCase" {
-	variables.semver = new semver();
+component name="semverTest" extends="mxunit.framework.TestCase" {
+	variables.semver = createObject("component","semver").init();
 	variables.eq = semver.eq;
 	variables.gt = semver.gt;
 	variables.lt = semver.lt;
@@ -94,16 +94,16 @@ var tests = [ ["1.2.3", "v1.2.3"]
   _.forEach(tests,function (v) {
     var v0 = v[1];
     var v1 = v[2];
-    t.ok(eq(v0, v1), "eq('"+v0+"', '"+v1+"')")
-    t.ok(!neq(v0, v1), "!neq('"+v0+"', '"+v1+"')")
-    t.ok(cmp(v0, "==", v1), "cmp("+v0+"=="+v1+")")
-    t.ok(!cmp(v0, "!=", v1), "!cmp("+v0+"!="+v1+")")
-    t.ok(!cmp(v0, "===", v1), "!cmp("+v0+"==="+v1+")")
-    t.ok(cmp(v0, "!==", v1), "cmp("+v0+"!=="+v1+")")
-    t.ok(!gt(v0, v1), "!gt('"+v0+"', '"+v1+"')")
-    t.ok(gte(v0, v1), "gte('"+v0+"', '"+v1+"')")
-    t.ok(!lt(v0, v1), "!lt('"+v0+"', '"+v1+"')")
-    t.ok(lte(v0, v1), "lte('"+v0+"', '"+v1+"')")
+    assertTrue(eq(v0, v1), "eq('"+v0+"', '"+v1+"')")
+    assertTrue(!neq(v0, v1), "!neq('"+v0+"', '"+v1+"')")
+    assertTrue(cmp(v0, "==", v1), "cmp("+v0+"=="+v1+")")
+    assertTrue(!cmp(v0, "!=", v1), "!cmp("+v0+"!="+v1+")")
+    assertTrue(!cmp(v0, "===", v1), "!cmp("+v0+"==="+v1+")")
+    assertTrue(cmp(v0, "!==", v1), "cmp("+v0+"!=="+v1+")")
+    assertTrue(!gt(v0, v1), "!gt('"+v0+"', '"+v1+"')")
+    assertTrue(gte(v0, v1), "gte('"+v0+"', '"+v1+"')")
+    assertTrue(!lt(v0, v1), "!lt('"+v0+"', '"+v1+"')")
+    assertTrue(lte(v0, v1), "lte('"+v0+"', '"+v1+"')")
   });
 }
 
@@ -176,7 +176,7 @@ var tests = [ ["1.0.0 - 2.0.0", "1.2.3"]
   , ["<=0.7.x", "0.6.2"]
   ];
   _.forEach(tests,function (v) {
-    t.ok(satisfies(v[2], v[1]), v[1]+" satisfied by "+v[2])
+    assertTrue(satisfies(v[2], v[1]), v[1]+" satisfied by "+v[2])
   });
 }
 
@@ -228,7 +228,7 @@ var tests = [ ["1.0.0 - 2.0.0", "2.2.3"]
   , ["<=0.7.x", "0.7.2"]
   ];
   _.forEach(tests,function (v) {
-    t.ok(!satisfies(v[2], v[1]), v[1]+" not satisfied by "+v[2])
+    assertTrue(!satisfies(v[2], v[1]), v[1]+" not satisfied by "+v[2])
   });
 }
 
@@ -248,7 +248,7 @@ var tests = [ [ "1.2.3",   "major", "2.0.0"   ]
   , [ "fake",  "major", null ]
   ];
   _.forEach(tests,function (v) {
-    t.equal(inc(v[1], v[2]), v[2], "inc("+v[1]+", "+v[2]+") === "+v[2])
+    assertEquals(inc(v[1], v[2]), v[2], "inc("+v[1]+", "+v[2]+") === "+v[2])
   })
 }
 
@@ -261,7 +261,7 @@ var tests = [ [ "", "" ]
   , [ "* || 1.2.3", " || 1.2.3" ]
   ];
   _.forEach(tests,function (v) {
-    t.equal(replaceStars(v[1]), v[2], "replaceStars("+v[1]+") === "+v[2])
+    assertEquals(replaceStars(v[1]), v[2], "replaceStars("+v[1]+") === "+v[2])
   });
 };
 
@@ -326,7 +326,7 @@ var tests = [ ["1.0.0 - 2.0.0", ">=1.0.0 <=2.0.0"]
   , ["1", ">=1.0.0- <2.0.0-"]
   ];
   _.forEach(tests,function (v) {
-    t.equal(validRange(v[1]), v[2], "validRange("+v[1]+") === "+v[2])
+    assertEquals(validRange(v[1]), v[2], "validRange("+v[1]+") === "+v[2])
   });
 };
 
@@ -394,11 +394,12 @@ var tests = [ ["1.0.0 - 2.0.0", [[">=1.0.0", "<=2.0.0"]] ]
   , ["1", [[">=1.0.0-", "<2.0.0-"]] ]
   ];
   _.forEach(tests,function (v) {
-    t.equivalent(toComparators(v[1]), v[2], "toComparators("+v[1]+") === "+JSON.stringify(v[2]))
+    assertEquals(toComparators(v[1]), v[2], "toComparators("+v[1]+") === "+JSON.stringify(v[2]))
   });
  }
 	public void function setUp() {
-		variables.console = new lib.console();
+		variables.console = new foundry.core.console();
+    variables._ = new foundry.core.util();
 		console.log("==============");
 	}
 
