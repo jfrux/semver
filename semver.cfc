@@ -28,33 +28,35 @@ component name="semver" extends="foundry.core" {
         ,parseSpermy : RegExp.init("^"&exprSpermy&"$")
      }
 
-    _.forEach(structKeyList(this.expressions),function(i) {
-      this[i] = function (str) {
-        return expressions[i].match("" & (str || ""));
-      }
-    });
+     var exprs = structKeyList(this.expressions);
+     for(i=1; i LTE listLen(exprs); i++) {
+        key = listGetAt(exprs,i);
+        this[key] = function(str) {
+          return this.expressions[key].match("" & (str || ""));
+        }
+    }
 
-    this.rangeReplace = ">=$1 <=$7"
-    this.clean = clean
-    this.compare = compare
-    this.rcompare = rcompare
-    this.satisfies = satisfies
-    this.gt = gt
-    this.gte = gte
-    this.lt = lt
-    this.lte = lte
-    this.eq = eq
-    this.neq = neq
-    this.cmp = cmp
-    this.inc = inc
+    this["rangeReplace"] = ">=$1 <=$7";
+    this["clean"] = clean;
+    this["compare"] = compare;
+    this["rcompare"] = rcompare;
+    this["satisfies"] = satisfies;
+    this["gt"] = gt;
+    this["gte"] = gte;
+    this["lt"] = lt;
+    this["lte"] = lte;
+    this["eq"] = eq;
+    this["neq"] = neq;
+    this["cmp"] = cmp;
+    this["inc"] = inc;
 
-    this.valid = valid
-    this.validPackage = validPackage
-    this.validRange = validRange
-    this.maxSatisfying = maxSatisfying
+    this["valid"] = valid;
+    this["validPackage"] = validPackage;
+    this["validRange"] = validRange;
+    this["maxSatisfying"] = maxSatisfying;
 
-    this.replaceStars = replaceStars
-    this.toComparators = toComparators
+    this["replaceStars"] = replaceStars;
+    this["toComparators"] = toComparators;
 
     // range can be one of:
     // "1.0.3 - 2.0.0" range, inclusive, like ">=1.0.3 <=2.0.0"
@@ -67,22 +69,25 @@ component name="semver" extends="foundry.core" {
     variables.compTrimExpression = RegExp.init("((<|>)?=?)\\s*("
                                         &semver&"|"&xRangePlain&")", "g");
     variables.compTrimReplace = "$1$3";
-
     return this;
   }
 
-  public any function stringify (version) {
+  /**
+  * @name stringify
+  * 
+  */
+  public any function stringify(version) {
     var v = version;
     return arrayToList([v[1]||'', v[2]||'', v[3]||''],".") & (v[4]||'') & (v[5]||'');
   }
 
-  public any function clean (version) {
+  public any function clean(version) {
     version = this.parse(version);
     if (!version) return version;
     return stringify(version);
   }
 
-  public any function valid (version) {
+  public any function valid(version) {
     if (!_.isString(version)) return null;
     parsedVersion = this.parse(version);
     version = trim(version);
@@ -90,13 +95,13 @@ component name="semver" extends="foundry.core" {
     return parsedVersion && version;
   }
 
-  public any function validPackage (version) {
+  public any function validPackage(version) {
     if (!_.isString(version)) return null;
     var matchedVersion = expressions.parsePackage.match(version);
     return matchedVersion && trim(version);
   }
 
-  function toComparators (range) {
+  public any function toComparators(range) {
     var ret = trim((range || ""));
     ret = expressions.parseRange.replace(ret, this.rangeReplace);
     ret = compTrimExpression.replace(ret, compTrimReplace);
@@ -123,7 +128,7 @@ component name="semver" extends="foundry.core" {
     return ret;
   }
 
-  function replaceStars (stars) {
+  public any function replaceStars(stars) {
     stars = trim(stars);
     stars = starExpression.replace(stars,starReplace);
 
@@ -132,14 +137,14 @@ component name="semver" extends="foundry.core" {
 
   // "2.x","2.x.x" --> ">=2.0.0- <2.1.0-"
   // "2.3.x" --> ">=2.3.0- <2.4.0-"
-  function replaceXRanges (ranges) {
+  public any function replaceXRanges(ranges) {
     ranges = _.split(ranges,"\s+");
     ranges = _.map(ranges,replaceXRange);
     ranges = _.join(ranges," ");
     return ranges;
   }
 
-  function replaceXRange (version) {
+  public any function replaceXRange(version) {
     version = trim(version);
     version = replace(version,expressions.parseXRange,function(v,gtlt,M,m,p,t) {
       var anyX = (!M || LCase(M) EQ "x" || M EQ "*"
@@ -176,7 +181,7 @@ component name="semver" extends="foundry.core" {
   // ~1.2, ~1.2.x, ~>1.2, ~>1.2.x --> >=1.2.0 <1.3.0
   // ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0
   // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0
-  function replaceSpermies (version) {
+  public any function replaceSpermies(version) {
     version = trim(version);
     version = replace(version,expressions.parseSpermy,
                                   function (v, gtlt, M, m, p, t) {
@@ -202,14 +207,14 @@ component name="semver" extends="foundry.core" {
       return version;
   }
 
-  function validRange (range) {
+  public any function validRange(range) {
     range = replaceStars(range);
     var c = toComparators(range);
     return (len(c) EQ 0) ? null : _.join(_.map(c,function (c) { return _.join(c," "); }),"||");
   }
 
   // returns the highest satisfying version in the list, or undefined
-  function maxSatisfying (versions, range) {
+  public any function maxSatisfying(versions, range) {
     versions = _.filter(versions,function(v) { return satisfies(v,range); });
     versions = _.sort(compare);
     versions = new foundry.array(versions);
@@ -217,7 +222,7 @@ component name="semver" extends="foundry.core" {
     return versions.pop();
   }
 
-  function satisfies (version, range) {
+  public any function satisfies(version, range) {
     version = valid(version);
     if (!version) return false;
     range = toComparators(range);
@@ -251,21 +256,21 @@ component name="semver" extends="foundry.core" {
   }
 
   // return v1 > v2 ? 1 : -1
-  function compare (v1, v2) {
+  public any function compare(v1, v2) {
     var g = gt(v1, v2);
     return ((g EQ null) ? 0 : g) ? 1 : 0;
   }
 
-  function rcompare (v1, v2) {
+  public any function rcompare(v1, v2) {
     return compare(v2, v1);
   }
 
-  function lt (v1, v2) { return gt(v2, v1); }
-  function gte (v1, v2) { return !lt(v1, v2); }
-  function lte (v1, v2) { return !gt(v1, v2); }
-  function eq (v1, v2) { return (gt(v1, v2) EQ null); }
-  function neq (v1, v2) { return (gt(v1, v2) NEQ null); }
-  function cmp (v1, c, v2) {
+  public any function lt(v1, v2) { return gt(v2, v1); }
+  public any function gte(v1, v2) { return !lt(v1, v2); }
+  public any function lte(v1, v2) { return !gt(v1, v2); }
+  public any function eq(v1, v2) { return (gt(v1, v2) EQ null); }
+  public any function neq(v1, v2) { return (gt(v1, v2) NEQ null); }
+  public any function cmp(v1, c, v2) {
     switch (c) {
       case ">": return gt(v1, v2);
       case "<": return lt(v1, v2);
@@ -280,11 +285,11 @@ component name="semver" extends="foundry.core" {
   }
 
   // return v1 > v2
-  function num (v) {
+  public any function num(v) {
     return (isDefined(v) ? 0 : reReplace(v||"0","[^0-9]+","", 10));
   }
 
-  function gt (v1, v2) {
+  public any function gt(v1, v2) {
     v1 = this.parse(v1);
     v2 = this.parse(v2);
     if (!v1 || !v2) return false;
@@ -307,7 +312,7 @@ component name="semver" extends="foundry.core" {
            : tag1 > tag2;
   }
 
-  function inc (version, release) {
+  public any function inc(version, release) {
     version = this.parse(version);
     if (!version) return null;
 

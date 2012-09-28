@@ -1,17 +1,4 @@
 component name="semverTest" extends="mxunit.framework.TestCase" {
-	variables.semver = createObject("component","semver").init();
-	variables.eq = semver.eq;
-	variables.gt = semver.gt;
-	variables.lt = semver.lt;
-	variables.neq = semver.neq;
-	variables.cmp = semver.cmp;
-	variables.gte = semver.gte;
-	variables.lte = semver.lte;
-	variables.satisfies = semver.satisfies;
-	variables.validRange = semver.validRange;
-	variables.inc = semver.inc;
-	variables.replaceStars = semver.replaceStars;
-	variables.toComparators = semver.toComparators;
 
 	public void function comparison_tests(t) {
 var tests = [ ["0.0.0", "0.0.0foo"]
@@ -43,17 +30,17 @@ var tests = [ ["0.0.0", "0.0.0foo"]
     var v0 = v[1];
     var v1 = v[2];
 
-    assertTrue(gt(v0, v1), "gt('"+v0+"', '"+v1+"')")
-    assertTrue(lt(v1, v0), "lt('"+v1+"', '"+v0+"')")
-    assertTrue(!gt(v1, v0), "!gt('"+v1+"', '"+v0+"')")
-    assertTrue(!lt(v0, v1), "!lt('"+v0+"', '"+v1+"')")
-    assertTrue(eq(v0, v0), "eq('"+v0+"', '"+v0+"')")
-    assertTrue(eq(v1, v1), "eq('"+v1+"', '"+v1+"')")
-    assertTrue(neq(v0, v1), "neq('"+v0+"', '"+v1+"')")
-    assertTrue(cmp(v1, "==", v1), "cmp('"+v1+"' == '"+v1+"')")
-    assertTrue(cmp(v0, ">=", v1), "cmp('"+v0+"' >= '"+v1+"')")
-    assertTrue(cmp(v1, "<=", v0), "cmp('"+v1+"' <= '"+v0+"')")
-    assertTrue(cmp(v0, "!=", v1), "cmp('"+v0+"' != '"+v1+"')")
+    assertTrue(semver.gt(v0, v1), "semver.gt('"+v0+"', '"+v1+"')")
+    assertTrue(semver.lt(v1, v0), "semver.lt('"+v1+"', '"+v0+"')")
+    assertTrue(!semver.gt(v1, v0), "!semver.gt('"+v1+"', '"+v0+"')")
+    assertTrue(!semver.lt(v0, v1), "!semver.lt('"+v0+"', '"+v1+"')")
+    assertTrue(semver.eq(v0, v0), "semver.eq('"+v0+"', '"+v0+"')")
+    assertTrue(semver.eq(v1, v1), "semver.eq('"+v1+"', '"+v1+"')")
+    assertTrue(semver.neq(v0, v1), "semver.neq('"+v0+"', '"+v1+"')")
+    assertTrue(semver.cmp(v1, "==", v1), "semver.cmp('"+v1+"' == '"+v1+"')")
+    assertTrue(semver.cmp(v0, ">=", v1), "semver.cmp('"+v0+"' >= '"+v1+"')")
+    assertTrue(semver.cmp(v1, "<=", v0), "semver.cmp('"+v1+"' <= '"+v0+"')")
+    assertTrue(semver.cmp(v0, "!=", v1), "semver.cmp('"+v0+"' != '"+v1+"')")
   });
 }
 
@@ -95,15 +82,15 @@ var tests = [ ["1.2.3", "v1.2.3"]
     var v0 = v[1];
     var v1 = v[2];
     assertTrue(eq(v0, v1), "eq('"+v0+"', '"+v1+"')")
-    assertTrue(!neq(v0, v1), "!neq('"+v0+"', '"+v1+"')")
-    assertTrue(cmp(v0, "==", v1), "cmp("+v0+"=="+v1+")")
-    assertTrue(!cmp(v0, "!=", v1), "!cmp("+v0+"!="+v1+")")
-    assertTrue(!cmp(v0, "===", v1), "!cmp("+v0+"==="+v1+")")
-    assertTrue(cmp(v0, "!==", v1), "cmp("+v0+"!=="+v1+")")
-    assertTrue(!gt(v0, v1), "!gt('"+v0+"', '"+v1+"')")
-    assertTrue(gte(v0, v1), "gte('"+v0+"', '"+v1+"')")
-    assertTrue(!lt(v0, v1), "!lt('"+v0+"', '"+v1+"')")
-    assertTrue(lte(v0, v1), "lte('"+v0+"', '"+v1+"')")
+    assertTrue(!semver.neq(v0, v1), "!semver.neq('"+v0+"', '"+v1+"')")
+    assertTrue(semver.cmp(v0, "==", v1), "semver.cmp("+v0+"=="+v1+")")
+    assertTrue(!semver.cmp(v0, "!=", v1), "!semver.cmp("+v0+"!="+v1+")")
+    assertTrue(!semver.cmp(v0, "===", v1), "!semver.cmp("+v0+"==="+v1+")")
+    assertTrue(semver.cmp(v0, "!==", v1), "semver.cmp("+v0+"!=="+v1+")")
+    assertTrue(!semver.gt(v0, v1), "!semver.gt('"+v0+"', '"+v1+"')")
+    assertTrue(semver.gte(v0, v1), "semver.gte('"+v0+"', '"+v1+"')")
+    assertTrue(!semver.lt(v0, v1), "!semver.lt('"+v0+"', '"+v1+"')")
+    assertTrue(semver.lte(v0, v1), "semver.lte('"+v0+"', '"+v1+"')")
   });
 }
 
@@ -398,8 +385,11 @@ var tests = [ ["1.0.0 - 2.0.0", [[">=1.0.0", "<=2.0.0"]] ]
   });
  }
 	public void function setUp() {
-		variables.console = new foundry.core.console();
     variables._ = new foundry.core.util();
+    variables.console = new foundry.core.console();
+    variables.semver = createObject("component","semver").init();
+    
+    //writeDump(var=semver,abort=true);
 		console.log("==============");
 	}
 
