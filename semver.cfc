@@ -5,35 +5,29 @@ component name="semver" extends="foundry.core" {
     // v1.2.3 things, and also tags that don't begin with a char.
     variables._ = require("util").init();
     variables.console = new foundry.core.console();
-    variables.ver = "\\s*[v=]*\\s*([0-9]+)"  // major
-                & "\\.([0-9]+)"           // minor
-                & "\\.([0-9]+)"           // patch
+    variables.ver = "\s*[v=]*\s*([0-9]+)"  // major
+                & "\.([0-9]+)"           // minor
+                & "\.([0-9]+)"           // patch
                 & "(-[0-9]+-?)?"          // build
                 & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?"; // tag
     variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$";
-    variables.xRangePlain = "[v=]*([0-9]+|x|X|\\*)"
-                    & "(?:\\.([0-9]+|x|X|\\*)"
-                    & "(?:\\.([0-9]+|x|X|\\*)"
+    variables.xRangePlain = "[v=]*([0-9]+|x|X|\*)"
+                    & "(?:\.([0-9]+|x|X|\*)"
+                    & "(?:\.([0-9]+|x|X|\*)"
                     & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?)?)?";
-    variables.xRange = "((?:<|>)=?)?\\s*" & xRangePlain;
+    variables.xRange = "((?:<|>)=?)?\s*" & xRangePlain;
     variables.exprSpermy = "(?:~>?)" & xRange;
 
     this.validRange = this._validRange;
 
     this['expressions'] = { 
-      'parse' : new foundry.core.regexp("^\\s*"&ver&"\\s*$")
-      ,'parsePackage' : new foundry.core.regexp("^\\s*([^\/]+)[-@](" &ver&")\\s*$")
-      ,'parseRange' : new foundry.core.RegExp("^\\s*(" & ver & ")\\s+-\\s+(" & ver & ")\\s*$")
+      'parse' : new foundry.core.regexp("^\s*"&ver&"\s*$")
+      ,'parsePackage' : new foundry.core.regexp("^\s*([^\/]+)[-@](" &ver&")\s*$")
+      ,'parseRange' : new foundry.core.RegExp("^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
       ,'validComparator' : new foundry.core.RegExp("^"&exprComparator&"$")
       ,'parseXRange' : new foundry.core.RegExp("^"& xRange &"$")
       ,'parseSpermy' : new foundry.core.RegExp("^"& exprSpermy &"$")
     }
-
-    structEach(this.expressions,function(i) {
-      this['#i#'] = function(str) {
-        return this.expressions[i].match("" & (str || ""));
-      }
-    });
 
     variables.rangeReplace = ">=$1 <=$7"
     // this.clean = clean
@@ -65,7 +59,7 @@ component name="semver" extends="foundry.core" {
     // ">1.0.2 <2.0.0" like 1.0.3 - 1.9999.9999
     variables.starExpression = "(<|>)?=?\s*\*";
     variables.starReplace = "";
-    variables.compTrimExpression = new foundry.core.regexp("((<|>)?=?)\\s*("&ver&"|"&xRangePlain&")", "g");
+    variables.compTrimExpression = new foundry.core.regexp("((<|>)?=?)\s*("&ver&"|"&xRangePlain&")", "g");
     variables.compTrimReplace = "$1$3";
 
     return this;
@@ -95,6 +89,24 @@ component name="semver" extends="foundry.core" {
 
     return local.result;
   }
+
+
+
+    public any function parse(str) {
+      return this.expressions.parse.match(str);
+    }
+    public any function parsePackage(str) {
+      return this.expressions.parsePackage.match(str);
+    }
+    public any function validComparator(str) {
+      return this.expressions.validComparator.match(str);
+    }
+    public any function parseXRange(str) {
+      return this.expressions.parseXRange.match(str);
+    }
+    public any function parseSpermy(str) {
+      return this.expressions.parseSpermy.match(str);
+    }
 
   public any function _valid (version) {
     if (!arrayisString(version)) return null;
@@ -268,7 +280,7 @@ component name="semver" extends="foundry.core" {
   // returns the highest satisfying version in the list, or undefined
   public any function _maxSatisfying (versions, range) {
     versions = arrayfilter(versions,function(v) { return satisfies(v,range); });
-    versions = arraysort(compare,'textnocase');
+    versions = arraysort(_compare,'textnocase');
     versions = new foundry.core.arrayObj(versions);
 
     return versions.pop();
@@ -277,7 +289,7 @@ component name="semver" extends="foundry.core" {
   public any function _satisfies (version, range) {
     version = valid(version);
     if (!version) return false;
-    range = toComparators(range);
+    range = _toComparators(range);
     
     var i = 0;
     var l = arrayLen(range);
@@ -317,12 +329,12 @@ component name="semver" extends="foundry.core" {
     return compare(v2, v1);
   }
 
-  public any function _lt (v1, v2) { return gt(v2, v1); }
-  public any function _gte (v1, v2) { return !lt(v1, v2); }
-  public any function _lte (v1, v2) { return !gt(v1, v2); }
-  public any function _eq (v1, v2) { return (gt(v1, v2) EQ null); }
-  public any function _neq (v1, v2) { return (gt(v1, v2) NEQ null); }
-  public any function _cmp (v1, c, v2) {
+  public any function lt (v1, v2) { return gt(v2,v1); }
+  public any function gte (v1, v2) { return !lt(v1,v2); }
+  public any function lte (v1, v2) { return !gt(v1,v2); }
+  public any function eq (v1, v2) { return (!gt(v1,v2) AND !lt(v1,v2)); }
+  public any function neq (v1, v2) { return (gt(v1, v2) OR lt(v1, v2)); }
+  public any function cmp (v1, c, v2) {
     switch (c) {
       case ">": return gt(v1, v2);
       case "<": return lt(v1, v2);
@@ -332,36 +344,45 @@ component name="semver" extends="foundry.core" {
       case "!=": return neq(v1, v2);
       case "EQ": return (v1 EQ v2);
       case "NEQ": return (v1 NEQ v2);
-      default: throw ("Y U NO USE VALID COMPARATOR!? "&c);
+      default: throw("Y U NO USE VALID COMPARATOR!? " & c);
     };
   }
 
-  // // return v1 > v2
-  public any function _num (v) {
-    return (isDefined(v) ? 0 : reReplace(v||"0","[^0-9]+","", 10));
-  }
+  public any function gt () {
+    v1 = this.parse(arguments[1]);
+    v2 = this.parse(arguments[2]);
+    if (structCount(v1) EQ 0 || structCount(v2) EQ 0) return false;
 
-  public any function _gt (v1, v2) {
-    v1 = this.parse(v1);
-    v2 = this.parse(v2);
-    if (!v1 || !v2) return false;
-
-    for (var i = 1; i < 5; i ++) {
-      v1[i] = num(v1[i]);
-      v2[i] = num(v2[i]);
-      if (v1[i] > v2[i]) return true;
-      else if (v1[i] NEQ v2[i]) return false;
+    for (var i = 1; i < 5; i++) {
+      var num1 = (structKeyExists(v1,i)? ReReplaceNoCase(v1[i],"[^0-9]","","ALL") : '');
+      var num2 = (structKeyExists(v2,i)? ReReplaceNoCase(v2[i],"[^0-9]","","ALL") : '');
+      console.log("num1: " & num1);
+      console.log("num2: " & num2);
+      if (num1 > num2) {
+        console.log("[#num1#] > [#num2#]");
+        return true;
+      } else if (num1 NEQ num2) {
+        console.log("[#num1#] != [#num2#]");
+        return false;
+      }
     }
-    // no tag is > than any tag, or use lexicographical order.
-    var tag1 = v1[5] || "";
-    var tag2 = v2[5] || "";
 
+    // no tag is > than any tag, or use lexicographical order.
+    var tag1 = (structKeyExists(v1,5)? v1[5] : '');
+    var tag2 = (structKeyExists(v2,5)? v2[5] : '');
+
+    console.log("tag1: " & tag1);
+    console.log("tag2: " & tag2);
     // kludge: null means they were equal.  falsey, and detectable.
     // embarrassingly overclever, though, I know.
-    return (((tag1 EQ tag2) ? null
-                   : !tag1) ? true
-               : !tag2) ? false
-           : tag1 > tag2;
+  
+    var tagResult = (compare(tag1,tag2) EQ 0)? false
+      : _.isEmpty(tag1) ? true
+      : _.isEmpty(tag2) ? false
+      : (compare(tag1,tag2) EQ 1);
+
+    console.log("tagResult: " & tagResult);
+    return tagResult;
   }
 
   public any function _inc (version, release) {
@@ -377,11 +398,11 @@ component name="semver" extends="foundry.core" {
     var incIndex = parsedIndexLookup[release];
     if (!isDefined(incIndex)) return null;
 
-    var current = num(version[incIndex])
+    var current = _num(version[incIndex])
     version[incIndex] = (current EQ -1) ? 1 : current + 1;
 
     for (var i = incIndex + 1; i < 5; i ++) {
-      if (num(version[i]) NEQ -1) version[i] = "0";
+      if (_num(version[i]) NEQ -1) version[i] = "0";
     }
 
     if (version[4]) version[4] = "-" + version[4];

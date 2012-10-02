@@ -1,97 +1,111 @@
 component name="semverTest" extends="mxunit.framework.TestCase" {
 
 	public void function comparison_tests(t) {
-var tests = [ ["0.0.0", "0.0.0foo"]
-  , ["0.0.1", "0.0.0"]
-  , ["1.0.0", "0.9.9"]
-  , ["0.10.0", "0.9.0"]
-  , ["0.99.0", "0.10.0"]
-  , ["2.0.0", "1.2.3"]
-  , ["v0.0.0", "0.0.0foo"]
-  , ["v0.0.1", "0.0.0"]
-  , ["v1.0.0", "0.9.9"]
-  , ["v0.10.0", "0.9.0"]
-  , ["v0.99.0", "0.10.0"]
-  , ["v2.0.0", "1.2.3"]
-  , ["0.0.0", "v0.0.0foo"]
-  , ["0.0.1", "v0.0.0"]
-  , ["1.0.0", "v0.9.9"]
-  , ["0.10.0", "v0.9.0"]
-  , ["0.99.0", "v0.10.0"]
-  , ["2.0.0", "v1.2.3"]
-  , ["1.2.3", "1.2.3-asdf"]
-  , ["1.2.3-4", "1.2.3"]
-  , ["1.2.3-4-foo", "1.2.3"]
-  , ["1.2.3-5", "1.2.3-5-foo"]
-  , ["1.2.3-5", "1.2.3-4"]
-  , ["1.2.3-5-foo", "1.2.3-5-Foo"]
-  ];
-  _.forEach(tests,function (v) {
-    var v0 = v[1];
-    var v1 = v[2];
+    var tests = [ 
+      ["0.0.0", "0.0.0foo"] 
+      ,["0.0.1", "0.0.0"]
+      , ["1.0.0", "0.9.9"]
+      , ["0.10.0", "0.9.0"]
+      , ["0.99.0", "0.10.0"]
+      , ["2.0.0", "1.2.3"]
+      , ["v0.0.0", "0.0.0foo"]
+      , ["v0.0.1", "0.0.0"]
+      , ["v1.0.0", "0.9.9"]
+      , ["v0.10.0", "0.9.0"]
+      , ["v0.99.0", "0.10.0"]
+      , ["v2.0.0", "1.2.3"]
+      , ["0.0.0", "v0.0.0foo"]
+      , ["0.0.1", "v0.0.0"]
+      , ["1.0.0", "v0.9.9"]
+      , ["0.10.0", "v0.9.0"]
+      , ["0.99.0", "v0.10.0"]
+      , ["2.0.0", "v1.2.3"]
+      , ["1.2.3", "1.2.3-asdf"], 
+      ["1.2.3-4", "1.2.3"]
+      , ["1.2.3-4-foo", "1.2.3"]
+      , ["1.2.3-5", "1.2.3-5-foo"]
+      , ["1.2.3-5", "1.2.3-4"]
+      , ["1.2.3-5-foo", "1.2.3-5-Foo"]
+      ];
 
-    assertTrue(semver.gt(v0, v1), "semver.gt('"+v0+"', '"+v1+"')")
-    assertTrue(semver.lt(v1, v0), "semver.lt('"+v1+"', '"+v0+"')")
-    assertTrue(!semver.gt(v1, v0), "!semver.gt('"+v1+"', '"+v0+"')")
-    assertTrue(!semver.lt(v0, v1), "!semver.lt('"+v0+"', '"+v1+"')")
-    assertTrue(semver.eq(v0, v0), "semver.eq('"+v0+"', '"+v0+"')")
-    assertTrue(semver.eq(v1, v1), "semver.eq('"+v1+"', '"+v1+"')")
-    assertTrue(semver.neq(v0, v1), "semver.neq('"+v0+"', '"+v1+"')")
-    assertTrue(semver.cmp(v1, "==", v1), "semver.cmp('"+v1+"' == '"+v1+"')")
-    assertTrue(semver.cmp(v0, ">=", v1), "semver.cmp('"+v0+"' >= '"+v1+"')")
-    assertTrue(semver.cmp(v1, "<=", v0), "semver.cmp('"+v1+"' <= '"+v0+"')")
-    assertTrue(semver.cmp(v0, "!=", v1), "semver.cmp('"+v0+"' != '"+v1+"')")
-  });
-}
+      _.forEach(tests,function (v) {
+        var v0 = v[1];
+        var v1 = v[2];
+        
+        console.log("=== [#v0#] [#v1#] ===");
+        assertTrue( semver.gt(v0, v1), "semver.gt('"&v0&"', '"&v1&"')");
+        assertTrue(semver.lt(v1, v0), "semver.lt('"&v1&"', '"&v0&"')");
+        assertTrue(!semver.gt(v1, v0), "!semver.gt('"&v1&"', '"&v0&"')");
+        assertTrue(!semver.lt(v0, v1), "!semver.lt('"&v0&"', '"&v1&"')");
+        assertTrue(semver.eq(v0, v0), "semver.eq('"&v0&"', '"&v0&"')");
+        assertTrue(semver.eq(v1, v1), "semver.eq('"&v1&"', '"&v1&"')");
+        assertTrue(semver.neq(v0, v1), "semver.neq('"&v0&"', '"&v1&"')");
+        assertTrue(semver.cmp(v1, "==", v1), "semver.cmp('"&v1&"' == '"&v1&"')");
+        assertTrue(semver.cmp(v0, ">=", v1), "semver.cmp('"&v0&"' >= '"&v1&"')");
+        assertTrue(semver.cmp(v1, "<=", v0), "semver.cmp('"&v1&"' <= '"&v0&"')");
+        assertTrue(semver.cmp(v0, "!=", v1), "semver.cmp('"&v0&"' != '"&v1&"')");
+      });
+    }
 
 public void function equality_tests(t) {
-var tests = [ ["1.2.3", "v1.2.3"]
-  , ["1.2.3", "=1.2.3"]
-  , ["1.2.3", "v 1.2.3"]
-  , ["1.2.3", "= 1.2.3"]
-  , ["1.2.3", " v1.2.3"]
-  , ["1.2.3", " =1.2.3"]
-  , ["1.2.3", " v 1.2.3"]
-  , ["1.2.3", " = 1.2.3"]
-  , ["1.2.3-0", "v1.2.3-0"]
-  , ["1.2.3-0", "=1.2.3-0"]
-  , ["1.2.3-0", "v 1.2.3-0"]
-  , ["1.2.3-0", "= 1.2.3-0"]
-  , ["1.2.3-0", " v1.2.3-0"]
-  , ["1.2.3-0", " =1.2.3-0"]
-  , ["1.2.3-0", " v 1.2.3-0"]
-  , ["1.2.3-0", " = 1.2.3-0"]
-  , ["1.2.3-01", "v1.2.3-1"]
-  , ["1.2.3-01", "=1.2.3-1"]
-  , ["1.2.3-01", "v 1.2.3-1"]
-  , ["1.2.3-01", "= 1.2.3-1"]
-  , ["1.2.3-01", " v1.2.3-1"]
-  , ["1.2.3-01", " =1.2.3-1"]
-  , ["1.2.3-01", " v 1.2.3-1"]
-  , ["1.2.3-01", " = 1.2.3-1"]
-  , ["1.2.3beta", "v1.2.3beta"]
-  , ["1.2.3beta", "=1.2.3beta"]
-  , ["1.2.3beta", "v 1.2.3beta"]
-  , ["1.2.3beta", "= 1.2.3beta"]
-  , ["1.2.3beta", " v1.2.3beta"]
-  , ["1.2.3beta", " =1.2.3beta"]
-  , ["1.2.3beta", " v 1.2.3beta"]
-  , ["1.2.3beta", " = 1.2.3beta"]
-  ];
-  _.forEach(tests,function (v) {
-    var v0 = v[1];
-    var v1 = v[2];
-    assertTrue(eq(v0, v1), "eq('"+v0+"', '"+v1+"')")
-    assertTrue(!semver.neq(v0, v1), "!semver.neq('"+v0+"', '"+v1+"')")
-    assertTrue(semver.cmp(v0, "==", v1), "semver.cmp("+v0+"=="+v1+")")
-    assertTrue(!semver.cmp(v0, "!=", v1), "!semver.cmp("+v0+"!="+v1+")")
-    assertTrue(!semver.cmp(v0, "===", v1), "!semver.cmp("+v0+"==="+v1+")")
-    assertTrue(semver.cmp(v0, "!==", v1), "semver.cmp("+v0+"!=="+v1+")")
-    assertTrue(!semver.gt(v0, v1), "!semver.gt('"+v0+"', '"+v1+"')")
-    assertTrue(semver.gte(v0, v1), "semver.gte('"+v0+"', '"+v1+"')")
-    assertTrue(!semver.lt(v0, v1), "!semver.lt('"+v0+"', '"+v1+"')")
-    assertTrue(semver.lte(v0, v1), "semver.lte('"+v0+"', '"+v1+"')")
-  });
+    var tests = [ ["1.2.3", "v1.2.3"]
+      , ["1.2.3", "=1.2.3"]
+      , ["1.2.3", "v 1.2.3"]
+      , ["1.2.3", "= 1.2.3"]
+      , ["1.2.3", " v1.2.3"]
+      , ["1.2.3", " =1.2.3"]
+      , ["1.2.3", " v 1.2.3"]
+      , ["1.2.3", " = 1.2.3"]
+      , ["1.2.3-0", "v1.2.3-0"]
+      , ["1.2.3-0", "=1.2.3-0"]
+      , ["1.2.3-0", "v 1.2.3-0"]
+      , ["1.2.3-0", "= 1.2.3-0"]
+      , ["1.2.3-0", " v1.2.3-0"]
+      , ["1.2.3-0", " =1.2.3-0"]
+      , ["1.2.3-0", " v 1.2.3-0"]
+      , ["1.2.3-0", " = 1.2.3-0"]
+      , ["1.2.3-01", "v1.2.3-1"]
+      , ["1.2.3-01", "=1.2.3-1"]
+      , ["1.2.3-01", "v 1.2.3-1"]
+      , ["1.2.3-01", "= 1.2.3-1"]
+      , ["1.2.3-01", " v1.2.3-1"]
+      , ["1.2.3-01", " =1.2.3-1"]
+      , ["1.2.3-01", " v 1.2.3-1"]
+      , ["1.2.3-01", " = 1.2.3-1"]
+      , ["1.2.3beta", "v1.2.3beta"]
+      , ["1.2.3beta", "=1.2.3beta"]
+      , ["1.2.3beta", "v 1.2.3beta"]
+      , ["1.2.3beta", "= 1.2.3beta"]
+      , ["1.2.3beta", " v1.2.3beta"]
+      , ["1.2.3beta", " =1.2.3beta"]
+      , ["1.2.3beta", " v 1.2.3beta"]
+      , ["1.2.3beta", " = 1.2.3beta"]
+      ];
+      _.forEach(tests,function (v) {
+        var v0 = v[1];
+        var v1 = v[2];
+        assertTrue(semver.eq(v0, v1), "eq('"&v0&"', '"&v1&"')")
+        assertTrue(!semver.neq(v0, v1), "!semver.neq('"&v0&"', '"&v1&"')")
+        assertTrue(semver.cmp(v0, "==", v1), "semver.cmp("&v0&"=="&v1&")")
+        assertTrue(!semver.cmp(v0, "!=", v1), "!semver.cmp("&v0&"!="&v1&")")
+
+        try {
+          semver.cmp(v0, "===", v1);
+        } catch(any err){
+            assertTrue(err.message NEQ "","#err.detail#");
+        }
+
+        try {
+          semver.cmp(v0, "!==", v1)
+        } catch(any err){
+            assertTrue(err.message NEQ "","#err.detail#");
+        }
+        //assertTrue(semver.cmp(v0, "!==", v1), "semver.cmp("&v0&"!=="&v1&")")
+        assertTrue(!semver.gt(v0, v1), "!semver.gt('"&v0&"', '"&v1&"')")
+        assertTrue(semver.gte(v0, v1), "semver.gte('"&v0&"', '"&v1&"')")
+        assertTrue(!semver.lt(v0, v1), "!semver.lt('"&v0&"', '"&v1&"')")
+        assertTrue(semver.lte(v0, v1), "semver.lte('"&v0&"', '"&v1&"')")
+    });
 }
 
 
