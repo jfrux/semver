@@ -5,51 +5,40 @@ component name="semver" extends="foundry.core" {
     // v1.2.3 things, and also tags that don't begin with a char.
     variables._ = require("util").init();
     variables.console = new foundry.core.console();
-    variables.ver = "\s*[v=]*\s*([0-9]+)"  // major
-                & "\.([0-9]+)"           // minor
-                & "\.([0-9]+)"           // patch
-                & "(-[0-9]+-?)?"          // build
-                & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?"; // tag
+    variables.ver = "\s*[v=]*\s*([0-9]+)"        // major
+                   & "\.([0-9]+)"                  // minor
+                   & "\.([0-9]+)"                  // patch
+                   & "(-[0-9]+-?)?"                 // build
+                   & "([a-zA-Z-+][a-zA-Z0-9-\.:]*)?" // tag
     variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$";
     variables.xRangePlain = "[v=]*([0-9]+|x|X|\*)"
-                    & "(?:\.([0-9]+|x|X|\*)"
-                    & "(?:\.([0-9]+|x|X|\*)"
-                    & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?)?)?";
+                & "(?:\.([0-9]+|x|X|\*)"
+                & "(?:\.([0-9]+|x|X|\*)"
+                & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?)?)?";
     variables.xRange = "((?:<|>)=?)?\s*" & xRangePlain;
     variables.exprSpermy = "(?:~>?)" & xRange;
 
     this.validRange = this._validRange;
 
     this['expressions'] = { 
-      'parse' : new foundry.core.regexp("^\s*"&ver&"\s*$")
-      ,'parsePackage' : new foundry.core.regexp("^\s*([^\/]+)[-@](" &ver&")\s*$")
-      ,'parseRange' : new foundry.core.RegExp("^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
-      ,'validComparator' : new foundry.core.RegExp("^"&exprComparator&"$")
-      ,'parseXRange' : new foundry.core.RegExp("^"& xRange &"$")
-      ,'parseSpermy' : new foundry.core.RegExp("^"& exprSpermy &"$")
+      'parse' : "^\s*"&ver&"\s*$"
+      ,'parsePackage' : "^\s*([^\/]+)[-@](" &ver&")\s*$"
+      ,'parseRange' : "^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$"
+      ,'validComparator' : "^"&exprComparator&"$"
+      ,'parseXRange' : "^"& xRange &"$"
+      ,'parseSpermy' : "^"& exprSpermy &"$"
     }
 
-    variables.rangeReplace = ">=$1 <=$7"
-    // this.clean = clean
-    // this.compare = compare
-    // this.rcompare = rcompare
-    // this.satisfies = satisfies
-    // this.gt = gt
-    // this.gte = gte
-    // this.lt = lt
-    // this.lte = lte
-    // this.eq = eq
-    // this.neq = neq
-    // this.cmp = cmp
-    // this.inc = inc
+    this['regexps'] = { 
+      'parse' : new foundry.core.regexp(this.expressions.parse)
+      ,'parsePackage' : new foundry.core.regexp(this.expressions.parsePackage)
+      ,'parseRange' : new foundry.core.RegExp(this.expressions.parseRange)
+      ,'validComparator' : new foundry.core.RegExp(this.expressions.validComparator)
+      ,'parseXRange' : new foundry.core.RegExp(this.expressions.parseXRange)
+      ,'parseSpermy' : new foundry.core.RegExp(this.expressions.parseSpermy)
+    }
 
-    // this.valid = valid
-    // this.validPackage = validPackage
-    // this.validRange = validRange
-    // this.maxSatisfying = maxSatisfying
-
-    // this.replaceStars = replaceStars
-    // this.toComparators = toComparators
+    variables.rangeReplace = ">=\1 <=\7"
 
     // range can be one of:
     // "1.0.3 - 2.0.0" range, inclusive, like ">=1.0.3 <=2.0.0"
@@ -59,8 +48,9 @@ component name="semver" extends="foundry.core" {
     // ">1.0.2 <2.0.0" like 1.0.3 - 1.9999.9999
     variables.starExpression = "(<|>)?=?\s*\*";
     variables.starReplace = "";
-    variables.compTrimExpression = new foundry.core.regexp("((<|>)?=?)\s*("&ver&"|"&xRangePlain&")", "g");
-    variables.compTrimReplace = "$1$3";
+    variables.compTrimExpression = "((<|>)?=?)\s*("&ver&"|"&xRangePlain&")";
+    variables.compTrimRegExp = new foundry.core.regexp(compTrimExpression);
+    variables.compTrimReplace = "\1\3";
 
     return this;
   }
@@ -75,16 +65,18 @@ component name="semver" extends="foundry.core" {
     if (!version) return version;
     return stringify(version);
   }
+
   private array function reSplit(regex,value) {
     var local = {};
     local.result = [];
+
     local.parts = javaCast( "string", arguments.value ).split(
       javaCast( "string", arguments.regex ),
       javaCast( "int", -1 )
     );
 
     for (local.part in local.parts) {
-      arrayAppend(local.result,local.part );
+      arrayAppend(local.result,local.part);
     };
 
     return local.result;
@@ -92,151 +84,155 @@ component name="semver" extends="foundry.core" {
 
 
 
-    public any function parse(str) {
-      return this.expressions.parse.match(str);
+    public struct function parse(str) {
+      console.print("parse: " & str & "// " & this.regexps.parse.match(str).toString());
+      return this.regexps.parse.match(str);
     }
-    public any function parsePackage(str) {
-      return this.expressions.parsePackage.match(str);
+    public struct function parsePackage(str) {
+      console.print("parsePackage: " & str & "// " & this.regexps.parsePackage.match(str).toString());
+      return this.regexps.parsePackage.match(str);
     }
-    public any function validComparator(str) {
-      return this.expressions.validComparator.match(str);
+    public struct function validComparator(str) {
+      console.print("validComparator: " & str & "// " & this.regexps.validComparator.match(str).toString());
+      return this.regexps.validComparator.match(str);
     }
-    public any function parseXRange(str) {
-      return this.expressions.parseXRange.match(str);
+    public struct function parseXRange(str) {
+      console.print("parseXRange: " & str & "// " & this.regexps.parseRange.match(str).toString());
+      return this.regexps.parseRange.match(str);
     }
-    public any function parseSpermy(str) {
-      return this.expressions.parseSpermy.match(str);
+    public struct function parseSpermy(str) {
+      console.print("parseSpermy: " & str & "// " & this.regexps.parseSpermy.match(str).toString());
+      return this.regexps.parseSpermy.match(str);
     }
 
-  public any function _valid (version) {
-    if (!arrayisString(version)) return null;
-    parsedVersion = this.parse(version);
+  public any function valid (version) {
+    if (!_.isString(version)) return null;
+    parsedVersion = this.regexps.parse.match(version);
     version = trim(version);
     version = reReplace(version,"^[v=]+","");
-    return parsedVersion && version;
+    console.print("valid version: " & version);
+    return !_.isEmpty(parsedVersion) && !_.isEmpty(version);
   }
 
   public any function _validPackage (version) {
-    if (!arrayisString(version)) return null;
+    if (!_.isString(version)) return null;
     var matchedVersion = expressions.parsePackage.match(version);
     return matchedVersion && trim(version);
   }
 
-  public any function _toComparators (range) {
+  public any function toComparators (range) {
     var ret = trim((!_.isEmpty(range)? range : ""));
-    ret = rereplace(ret,this.expressions.parseRange.getPattern(),rangeReplace);
-    ret = rereplace(ret,compTrimExpression.getPattern(),compTrimReplace);
-    ret = resplit("\s+",ret);
-    ret = arrayToList(ret," ");
-    ret = resplit("||",ret);
+    console.print("toComparators [ret] default: " & ret);
+    ret = rereplacenocase(ret,this.expressions.parseRange,rangeReplace,"ALL");
     
+    console.print("toComparators [ret] parseRange: " & ret);
+    ret = rereplacenocase(ret,compTrimExpression,compTrimReplace,"ALL");
+    console.print("toComparators [ret] compTrim: " & ret);
+    
+    ret = resplit("\s+",ret);
+    console.print("toComparators [ret] split at space: " & ret.toString());
+    ret = arrayToList(ret," ");
+    console.print("toComparators [ret] back to list: " & ret);
+    
+    if(ret CONTAINS "||") {
+      ret = listToArray(ret,"||");
+      console.print("toComparators [ret] split at ||: " & ret.toString());
+    }
+    
+    if(_.isEmpty(ret)) ret = " ";
+
     ret = _map(ret,function (orchunk) {
-            var response = arguments.orchunk;
-            console.log("in");
-            response = resplit(response," ");
-            response = _map(response,this._replaceXRanges);
-            response = _map(response,this._replaceSpermies);
-            response = _map(response,this._replaceStars);
-            response = arrayToList(response," ");
-      return response;
+            var orchunk = arguments.orchunk;
+            orchunk = listToArray(orchunk," ");
+            writeDump(label="orchunk listToArray",var=orchunk);
+            orchunk = _map(orchunk,this._replaceXRanges);
+            writeDump(label="orchunk _replaceXRanges",var=orchunk);
+            orchunk = _map(orchunk,this._replaceSpermies);
+            writeDump(label="orchunk _replaceSpermies",var=orchunk);
+            orchunk = _map(orchunk,this._replaceStars);
+            writeDump(label="orchunk _replaceStars",var=orchunk);
+            orchunk = arrayToList(orchunk," ");
+      return orchunk;
     });
+
     ret = _map(ret,function (orchunk) {
         orchunk = trim(orchunk);
-        orchunk = resplit(orchunk,"\s+");
-        orchunk = arrayfilter(orchunk,function (c) { return c.match(this.expressions.validComparator); });
+        orchunk = resplit("\s+",orchunk);
+        orchunk = arrayfilter(orchunk,function (c) { return this.regexps.validComparator.test(c); });
         return orchunk;
-      })
-    ret = arrayfilter(ret,function (c) { return c.length; });
+      });
+    ret = arrayfilter(ret,function (c) { return arraylen(c); });
     return ret;
   }
 
-  public any function _replaceStars (stars) {
+  public any function _replaceStars(stars) {
     stars = trim(stars);
-    stars = replace(starExpression,stars,starReplace);
+    stars = rereplace(stars,starExpression,starReplace);
 
     return stars;
   }
 
-  public array function _map(obj,iterator = _.identity, this = {}) {
-    var result = [];
-
-    if (isArray(arguments.obj)) {
-      var index = 1;
-      var resultIndex = 1;
-      for (element in arguments.obj) {
-        if (!arrayIsDefined(arguments.obj, index)) {
-          index++;
-          continue;
-        }
-        var local = {};
-        local.tmp = iterator(element, index, arguments.obj, arguments.this);
-        if (structKeyExists(local, "tmp")) {
-          result[resultIndex] = local.tmp;
-        }
-        index++;
-        resultIndex++;
-      }
-    }
-
-    else if (isObject(arguments.obj) || isStruct(arguments.obj)) {
-      var index = 1;
-      for (key in arguments.obj) {
-        var val = arguments.obj[key];
-        var local = {};
-        local.tmp = iterator(val, key, arguments.obj, arguments.this);
-        if (structKeyExists(local, "tmp")) {
-          result[index] = local.tmp;
-        }
-        index++;
-      }
-    }
-    else {
-      // query or something else? convert to array and recurse
-      result = _map(toArray(arguments.obj), iterator, arguments.this);
-    }
-
-    return result;
-  }
+ 
+  
   // "2.x","2.x.x" --> ">=2.0.0- <2.1.0-"
   // "2.3.x" --> ">=2.3.0- <2.4.0-"
   public any function _replaceXRanges(ranges) {
+    console.print("should be " & ranges);
     ranges = resplit("\s+",ranges);
-    writeDump(var=ranges,abort=true);
+    //writeDump(var=ranges,abort=true);
     ranges = _map(ranges,this._replaceXRange);
     ranges = arrayToList(ranges," ");
     return ranges;
   }
 
-  public any function _replaceXRange (version,gtlt,M1,m2,p,t) {
+  public any function _replaceXRange (version) {
     version = trim(version);
     var v = version;
-    writeDump(var=arguments,abort=true);
-    var anyX = (!isDefined("M1") || LCase(M1) EQ "x" || M1 EQ "*"
-                 || !isDefined("m2") || LCase(m2) EQ "x" || m2 EQ "*"
-                 || !isDefined("p") || LCase(p) EQ "x" || p EQ "*");
-    var ret = v;
+    var replacer = function (v,gtlt, M, n, p, t) {
+      console.print("xrange replacer args: " & serialize(arguments));
+      var anyX = isNull(M) ||  _.isEmpty(M) || (M.toLowerCase() EQ "x") || M EQ "*" 
+                 || isNull(n) || _.isEmpty(n) || (n.toLowerCase() EQ "x") || n EQ "*"
+                 || isNull(p) || _.isEmpty(p) || (p.toLowerCase() EQ "x") || p EQ "*"
+      var ret = v;
+      console.log("anyX: " & anyX);
+      
+      if (structKeyExists(arguments,'gtlt') && anyX) {
+        // just replace x'es with zeroes
+        if(isNull(M) || _.isEmpty(M) || M EQ "*" || (M.toLowerCase() EQ "x")) M = 0;
+        if(isNull(n) || _.isEmpty(n) || n EQ "*" || (n.toLowerCase() EQ "x")) n = 0;
+        if(isNull(p) || _.isEmpty(p) || p EQ "*" || (p.toLowerCase() EQ "x")) p = 0;
+        
+        ret = gtlt & M & "." & n & "." & p &"-"
 
-      if (isDefined("gtlt") && isDefined("anyX")) {
-        // just replace x-es with zeroes
-        (!isDefined("M1") || M1 EQ "*" || LCase(M1) EQ "x") && (M1 = 0);
-        (!isDefined("m2") || m2 EQ "*" || LCase(m2) EQ "x") && (m2 = 0);
-        (!isDefined("p") || p EQ "*" || LCase(p) EQ "x") && (p = 0);
-        ret = gtlt & M1&"."&m2&"."&p&"-";
-      } else if (!isDefined("M1") || M1 EQ "*" || LCase(M1) EQ "x") {
-        ret = "*"; // allow any
-      } else if (!isDefined("m2") || m2 EQ "*" || LCase(m2) EQ "x") {
+      } else if (isNull(M) || _.isEmpty(M) || M EQ "*" || M.toLowerCase() EQ "x") {
+        ret = "*" // allow any
+      } else if (isNull(n) || _.isEmpty(n) || n EQ "*" || n.toLowerCase() EQ "x") {
         // append "-" onto the version, otherwise
         // "1.x.x" matches "2.0.0beta", since the tag
         // *lowers* the version value
-        ret = ">=" & M1 & ".0.0- <" & (M1 + 1) & ".0.0-";
-      } else if (!isDefined("p") || p EQ "*" || LCase(p) EQ "x") {
-        ret = ">="&M1&"."&m2&".0- <"&M1&"." & (m2+1) & ".0-";
+        ret = ">="&M&".0.0- <"&(+M+1)&".0.0-"
+      } else if (isNull(p) || _.isEmpty(p) || p EQ "*" || p.toLowerCase() EQ "x") {
+        ret = ">="&M&"."&n&".0- <"&M&"."&(+n+1)&".0-"
       }
       //console.error("parseXRange", [].slice.call(arguments), ret)
+      console.print("result of replacer: " & ret.toString());
+      return ret;
+    };
 
-    version = rereplace(version,this.expressions.parseXRange.getPattern(),ret);
-      
-      return version;
+    console.print("version: " & version);
+    var matches = this.regexps.parseXRange.match(version);
+    var replacerArgs = {
+      'v':!isNull(matches[0])? matches[0] : '',
+      'gtlt':!isNull(matches[1])? matches[1] : '',
+      'M':!isNull(matches[2])? matches[2] : '',
+      'n':!isNull(matches[3])? matches[3] : '',
+      'p':!isNull(matches[4])? matches[4] : '',
+      't':!isNull(matches[5])? matches[5] : '',
+    }
+    var result = replacer(argumentCollection=replacerArgs);
+    version = rereplace(version,this.expressions.parseXRange,result);
+    console.print("now version: " & version);
+    return version;
   }
 
   // ~, ~> --> * (any, kinda silly)
@@ -247,33 +243,45 @@ component name="semver" extends="foundry.core" {
   // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0
   public any function _replaceSpermies (version) {
     version = trim(version);
-    version = replace(version,this.expressions.parseSpermy,
-                                  function (v, gtlt, M, m, p, t) {
-      if (gtlt) throw (
+    var replacer = function (v,gtlt, M, m, p, t) {
+      if (structKeyExists(arguments,'gtlt') AND !isNull(gtlt) AND !_.isEmpty(gtlt)) throw (
         "Using '"&gtlt&"' with ~ makes no sense. Don't do it.");
 
-      if (!M || LCase(M) EQ "x") {
+      if (isNull(M) || LCase(M) EQ "x") {
         return "";
       }
       // ~1 == >=1.0.0- <2.0.0-
-      if (!m || LCase(m) EQ "x") {
+      if (isNull(n) || LCase(n) EQ "x") {
         return ">="&M&".0.0- <"& (M + 1) & ".0.0-";
       }
       // ~1.2 == >=1.2.0- <1.3.0-
-      if (!isDefined("p") || LCase(p) EQ "x") {
-        return ">="&M&"."&m&".0- <"&M&"."& (m + 1) & ".0-";
+      if (isNull(p) || LCase(p) EQ "x") {
+        return ">="&M&"."&n&".0- <"&M&"."& (n + 1) & ".0-";
       }
       // ~1.2.3 == >=1.2.3- <1.3.0-
-      t = t || "-"
-      return ">="&M&"."&m&"."&p&t&" <"&M&"."&(m+1)&".0-";
-      });
-      
-      return version;
+      t = !isNull(t)? t : "-"
+      return ">="&M&"."&n&"."&p&t&" <"&M&"."&(n+1)&".0-";
+    };
+
+    console.print("version: " & version);
+    var matches = this.regexps.parseSpermy.match(version);
+    var replacerArgs = {
+        'v':!isNull(matches[0])? matches[0] : '',
+        'gtlt':!isNull(matches[1])? matches[1] : '',
+        'M':!isNull(matches[2])? matches[2] : '',
+        'n':!isNull(matches[3])? matches[3] : '',
+        'p':!isNull(matches[4])? matches[4] : '',
+        't':!isNull(matches[5])? matches[5] : '',
+      }
+    var result = replacer(argumentCollection=replacerArgs);
+    version = rereplace(version,this.expressions.parseXRange,result);
+    console.print("now version: " & version);
+    return version;
   }
 
   public any function _validRange (range) {
     range = _replaceStars(range);
-    var c = _toComparators(range);
+    var c = toComparators(range);
     return (len(c) EQ 0) ? null : arrayToList(_map(c,function (c) { return arrayToList(c," "); }),"||");
   }
 
@@ -286,38 +294,40 @@ component name="semver" extends="foundry.core" {
     return versions.pop();
   }
 
-  public any function _satisfies (version, range) {
+  public any function satisfies (version, range) {
+    console.print("satisfies('" & version & "','" & range & "');");
     version = valid(version);
     if (!version) return false;
-    range = _toComparators(range);
-    
+    range = toComparators(range);
+
     var i = 0;
     var l = arrayLen(range);
 
-    while (i < l) {
-      i++;
+    for (var i = 1; i <= l ; i ++) {
       var ok = false;
-      var j = 0;
       var ll = arrayLen(range[i]);
-
-      while (j < ll) {
-        j++;
+      for (var j = 1; j <= ll ; j ++) {
         var r = range[i][j];
-        var gtlt = left(r,1) EQ ">" ? gt : left(r,1) EQ "<" ? lt : false;
-        var eq = r.charAt(!!gtlt) EQ "=";
-        var sub = (!!eq) + (!!gtlt);
+        var gtlt = mid(r,1,1) EQ ">" ? gt
+                 : mid(r,1,1) EQ "<" ? lt
+                 : false;
+        if(_.isFunction(gtlt)) gtltDef = true;
+        else gtltDef = false;
 
-        if (!gtlt) eq = true;
+        console.print("r: " & r);
+        var eq = len(r) GT 0? (r.charAt(!!gtltDef) EQ "=") : false;
+        var sub = (!!eq) + (!!gtltDef);
 
-        r = r.substr(sub);
+        if (!gtltDef) eq = true;
+        r = r.substring(sub);
         r = (r EQ "") ? r : valid(r);
-        ok = (r EQ "") || (eq && r EQ version) || (gtlt && gtlt(version, r));
+        ok = (r EQ "") || (eq && r EQ version) || (gtltDef && gtlt(version, r));
         if (!ok) break;
       }
       if (ok) return true;
-    }
+    };
     return false;
-  }
+  };
 
   // // return v1 > v2 ? 1 : -1
   public any function _compare (v1, v2) {
@@ -356,13 +366,10 @@ component name="semver" extends="foundry.core" {
     for (var i = 1; i < 5; i++) {
       var num1 = (structKeyExists(v1,i)? ReReplaceNoCase(v1[i],"[^0-9]","","ALL") : '');
       var num2 = (structKeyExists(v2,i)? ReReplaceNoCase(v2[i],"[^0-9]","","ALL") : '');
-      console.log("num1: " & num1);
-      console.log("num2: " & num2);
+      
       if (num1 > num2) {
-        console.log("[#num1#] > [#num2#]");
         return true;
       } else if (num1 NEQ num2) {
-        console.log("[#num1#] != [#num2#]");
         return false;
       }
     }
@@ -370,9 +377,6 @@ component name="semver" extends="foundry.core" {
     // no tag is > than any tag, or use lexicographical order.
     var tag1 = (structKeyExists(v1,5)? v1[5] : '');
     var tag2 = (structKeyExists(v2,5)? v2[5] : '');
-
-    console.log("tag1: " & tag1);
-    console.log("tag2: " & tag2);
     // kludge: null means they were equal.  falsey, and detectable.
     // embarrassingly overclever, though, I know.
   
@@ -380,8 +384,6 @@ component name="semver" extends="foundry.core" {
       : _.isEmpty(tag1) ? true
       : _.isEmpty(tag2) ? false
       : (compare(tag1,tag2) EQ 1);
-
-    console.log("tagResult: " & tagResult);
     return tagResult;
   }
 
@@ -409,5 +411,51 @@ component name="semver" extends="foundry.core" {
     version[5] = "";
 
     return stringify(version);
+  }
+
+   public array function _map(obj,iterator = _.identity, this = {}) {
+    var result = [];
+
+    if (isArray(arguments.obj)) {
+      var index = 1;
+      var resultIndex = 1;
+      
+      for (element in arguments.obj) {
+        if (!arrayIsDefined(arguments.obj, index)) {
+          index++;
+          continue;
+        }
+        var local = {};
+        local.tmp = iterator(element, index, arguments.obj, arguments.this);
+        if (structKeyExists(local, "tmp")) {
+          result[resultIndex] = local.tmp;
+        }
+        index++;
+        resultIndex++;
+      }
+    }
+
+    else if (isObject(arguments.obj) || isStruct(arguments.obj)) {
+      var index = 1;
+      for (key in arguments.obj) {
+        var val = arguments.obj[key];
+        var local = {};
+        local.tmp = iterator(val, key, arguments.obj, arguments.this);
+        if (structKeyExists(local, "tmp")) {
+          result[index] = local.tmp;
+        }
+        index++;
+      }
+    }
+    else {
+      // query or something else? convert to array and recurse
+      result = _map(_.toArray(arguments.obj), iterator, arguments.this);
+    }
+
+    return result;
+  }
+
+  public any function regexp_escape(str) {
+    return rereplacenocase(arguments.str,"^([.?*+^$[\]\\(){}|-])","\1","all");
   }
 }
