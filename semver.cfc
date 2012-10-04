@@ -137,18 +137,13 @@ component name="semver" extends="foundry.core" {
        orchunk = trim(orchunk);
         orchunk = resplit("\s+",orchunk);
        orchunk = arrayfilter(orchunk,function (c) { 
-                      //console.print('c: ' & serialize(c));
-                      //console.print('valid?: ' & serialize(this.expressions.validComparator.test(c)));
                       var isValid = this.expressions.validComparator.test(c);
                      
                       return isValid; });
-        //console.print("[orchunk2 filter] " & serialize(orchunk)); 
         return orchunk;
       });
-    //console.print("ret after again: " & serialize(ret));
     
     ret = arrayfilter(ret,function (c) { return arraylen(c); });
-    //console.print("ret after againx2: " & serialize(ret));
     return ret;
   }
 
@@ -162,7 +157,6 @@ component name="semver" extends="foundry.core" {
   // "2.x","2.x.x" --> ">=2.0.0- <2.1.0-"
   // "2.3.x" --> ">=2.3.0- <2.4.0-"
   public any function _replaceXRanges(ranges) {
-    //console.print("should be " & ranges);
     ranges = resplit("\s+",ranges);
     
     ranges = _map(ranges,this._replaceXRange);
@@ -172,8 +166,6 @@ component name="semver" extends="foundry.core" {
   }
 
   public any function _replaceXRange (version) {
-    //console.print("#chr(10)#= XRANGE START");
-    //console.print("args: " & serialize(arguments));
     version = trim(version);
     return this.expressions.parseXRange.replace(version,function (v,gtlt, M, n, p, t) {
           //console.print("#chr(10)#===== XRANGE REPLACER START")

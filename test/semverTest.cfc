@@ -32,7 +32,6 @@ component name="semverTest" extends="mxunit.framework.TestCase" {
         var v0 = v[1];
         var v1 = v[2];
         
-        console.log("=== [#v0#] [#v1#] ===");
         assertTrue( semver.gt(v0, v1), "semver.gt('"&v0&"', '"&v1&"')");
         assertTrue(semver.lt(v1, v0), "semver.lt('"&v1&"', '"&v0&"')");
         assertTrue(!semver.gt(v1, v0), "!semver.gt('"&v1&"', '"&v0&"')");
@@ -178,10 +177,7 @@ var tests = [
   , ["<=0.7.x", "0.6.2"]
   ];
   _.forEach(tests,function (v) {
-    //semver.satisfies(v[2], v[1]);
-    console.print("============");
     assertTrue(semver.satisfies(v[2], v[1]), v[1] & " satisfied by " & v[2])
-    console.print("============");
   });
 }
 
@@ -408,12 +404,9 @@ var tests = [
     variables.console = new foundry.core.console();
     variables.semver = createObject("component","semver").init();
     
-    //writeDump(var=semver,abort=true);
-		console.log("==============");
 	}
 
 	public void function tearDown() {
-		console.log("==============");
 		structDelete(variables,'console');
 	}
 
