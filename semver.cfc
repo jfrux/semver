@@ -4,38 +4,35 @@ component name="semver" extends="foundry.core" {
     // This implementation is a *hair* less strict in that it allows
     // v1.2.3 things, and also tags that don't begin with a char.
     variables._ = require("util").init();
+    
     variables.console = new foundry.core.console();
+    
     variables.ver = "\s*[v=]*\s*([0-9]+)"        // major
                    & "\.([0-9]+)"                  // minor
                    & "\.([0-9]+)"                  // patch
                    & "(-[0-9]+-?)?"                 // build
                    & "([a-zA-Z-+][a-zA-Z0-9-\.:]*)?" // tag
-    variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$";
+    
+    variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$"
+    
     variables.xRangePlain = "[v=]*([0-9]+|x|X|\*)"
-                & "(?:\.([0-9]+|x|X|\*)"
-                & "(?:\.([0-9]+|x|X|\*)"
-                & "([a-zA-Z-][a-zA-Z0-9-\.:]*)?)?)?";
+                          & "(?:\.([0-9]+|x|X|\*)"
+                          & "(?:\.([0-9]+|x|X|\*)"
+                          & "([a-zA-Z-][a-zA-Z0-9-.:]*)?)?)?";
+    
     variables.xRange = "((?:<|>)=?)?\s*" & xRangePlain;
+    
     variables.exprSpermy = "(?:~>?)" & xRange;
 
     this.validRange = this._validRange;
 
     this['expressions'] = { 
-      'parse' : "^\s*"&ver&"\s*$"
-      ,'parsePackage' : "^\s*([^\/]+)[-@](" &ver&")\s*$"
-      ,'parseRange' : "^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$"
-      ,'validComparator' : "^"&exprComparator&"$"
-      ,'parseXRange' : "^"& xRange &"$"
-      ,'parseSpermy' : "^"& exprSpermy &"$"
-    }
-
-    this['regexps'] = { 
-      'parse' : new foundry.core.regexp(this.expressions.parse)
-      ,'parsePackage' : new foundry.core.regexp(this.expressions.parsePackage)
-      ,'parseRange' : new foundry.core.RegExp(this.expressions.parseRange)
-      ,'validComparator' : new foundry.core.RegExp(this.expressions.validComparator)
-      ,'parseXRange' : new foundry.core.RegExp(this.expressions.parseXRange)
-      ,'parseSpermy' : new foundry.core.RegExp(this.expressions.parseSpermy)
+      'parse' : new foundry.core.regexp("^\s*"&ver&"\s*$")
+      ,'parsePackage' : new foundry.core.regexp("^\s*([^\/]+)[-@](" &ver&")\s*$")
+      ,'parseRange' : new foundry.core.regexp("^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
+      ,'validComparator' : new foundry.core.regexp("^"&exprComparator&"$")
+      ,'parseXRange' : new foundry.core.regexp("^"& xRange &"$")
+      ,'parseSpermy' : new foundry.core.regexp("^"& exprSpermy &"$")
     }
 
     variables.rangeReplace = ">=\1 <=\7"
@@ -48,8 +45,7 @@ component name="semver" extends="foundry.core" {
     // ">1.0.2 <2.0.0" like 1.0.3 - 1.9999.9999
     variables.starExpression = "(<|>)?=?\s*\*";
     variables.starReplace = "";
-    variables.compTrimExpression = "((<|>)?=?)\s*("&ver&"|"&xRangePlain&")";
-    variables.compTrimRegExp = new foundry.core.regexp(compTrimExpression);
+    variables.compTrimExpression = new foundry.core.regexp("((<|>)?=?)\s*("&ver&"|"&xRangePlain&")");
     variables.compTrimReplace = "\1\3";
 
     return this;
@@ -57,13 +53,13 @@ component name="semver" extends="foundry.core" {
 
   public any function _stringify (version) {
     var v = version;
-    return arrayToList([v[1]||'', v[2]||'', v[3]||''],".") & (v[4]||'') & (v[5]||'');
+    return arrayToList([(!isNull(v[1])? v[1] : ''), (!isNull(v[2])? v[2] : ''), (!isNull(v[3])? v[3] : '')],".") & (!isNull(v[4])? v[4] : '') & ((!isNull(v[5])? v[5] : ''));
   }
 
   public any function _clean (version) {
     version = this.parse(version);
-    if (!version) return version;
-    return stringify(version);
+    if (structCount(version) EQ 0) return version;
+    return _stringify(version);
   }
 
   private array function reSplit(regex,value) {
@@ -82,36 +78,32 @@ component name="semver" extends="foundry.core" {
     return local.result;
   }
 
-
-
     public struct function parse(str) {
-      console.print("parse: " & str & "// " & this.regexps.parse.match(str).toString());
-      return this.regexps.parse.match(str);
+      return this.expressions.parse.match(str);
     }
     public struct function parsePackage(str) {
-      console.print("parsePackage: " & str & "// " & this.regexps.parsePackage.match(str).toString());
-      return this.regexps.parsePackage.match(str);
+      return this.expressions.parsePackage.match(str);
     }
     public struct function validComparator(str) {
-      console.print("validComparator: " & str & "// " & this.regexps.validComparator.match(str).toString());
-      return this.regexps.validComparator.match(str);
+      return this.expressions.validComparator.match(str);
     }
     public struct function parseXRange(str) {
-      console.print("parseXRange: " & str & "// " & this.regexps.parseRange.match(str).toString());
-      return this.regexps.parseRange.match(str);
+      return this.expressions.parseRange.match(str);
     }
     public struct function parseSpermy(str) {
-      console.print("parseSpermy: " & str & "// " & this.regexps.parseSpermy.match(str).toString());
-      return this.regexps.parseSpermy.match(str);
+      return this.expressions.parseSpermy.match(str);
     }
 
   public any function valid (version) {
     if (!_.isString(version)) return null;
-    parsedVersion = this.regexps.parse.match(version);
+    parsedVersion = this.expressions.parse.match(version);
     version = trim(version);
     version = reReplace(version,"^[v=]+","");
-    console.print("valid version: " & version);
-    return !_.isEmpty(parsedVersion) && !_.isEmpty(version);
+    if(structCount(parsedVersion) GT 0) {
+      return version;
+    } else {
+      return false;
+    }
   }
 
   public any function _validPackage (version) {
@@ -122,46 +114,41 @@ component name="semver" extends="foundry.core" {
 
   public any function toComparators (range) {
     var ret = trim((!_.isEmpty(range)? range : ""));
-    console.print("toComparators [ret] default: " & ret);
-    ret = rereplacenocase(ret,this.expressions.parseRange,rangeReplace,"ALL");
-    
-    console.print("toComparators [ret] parseRange: " & ret);
-    ret = rereplacenocase(ret,compTrimExpression,compTrimReplace,"ALL");
-    console.print("toComparators [ret] compTrim: " & ret);
-    
+    ret = this.expressions.parseRange.replace(ret,rangeReplace);
+    ret = compTrimExpression.replace(ret,compTrimReplace);
     ret = resplit("\s+",ret);
-    console.print("toComparators [ret] split at space: " & ret.toString());
     ret = arrayToList(ret," ");
-    console.print("toComparators [ret] back to list: " & ret);
     
     if(ret CONTAINS "||") {
-      ret = listToArray(ret,"||");
-      console.print("toComparators [ret] split at ||: " & ret.toString());
+      ret = listToArray(" " & ret & " ","||");
     }
     
-    if(_.isEmpty(ret)) ret = " ";
-
+    if(_.isEmpty(ret)) ret = [""];
     ret = _map(ret,function (orchunk) {
             var orchunk = arguments.orchunk;
             orchunk = listToArray(orchunk," ");
-            writeDump(label="orchunk listToArray",var=orchunk);
             orchunk = _map(orchunk,this._replaceXRanges);
-            writeDump(label="orchunk _replaceXRanges",var=orchunk);
             orchunk = _map(orchunk,this._replaceSpermies);
-            writeDump(label="orchunk _replaceSpermies",var=orchunk);
             orchunk = _map(orchunk,this._replaceStars);
-            writeDump(label="orchunk _replaceStars",var=orchunk);
             orchunk = arrayToList(orchunk," ");
       return orchunk;
     });
-
     ret = _map(ret,function (orchunk) {
-        orchunk = trim(orchunk);
+       orchunk = trim(orchunk);
         orchunk = resplit("\s+",orchunk);
-        orchunk = arrayfilter(orchunk,function (c) { return this.regexps.validComparator.test(c); });
+       orchunk = arrayfilter(orchunk,function (c) { 
+                      //console.print('c: ' & serialize(c));
+                      //console.print('valid?: ' & serialize(this.expressions.validComparator.test(c)));
+                      var isValid = this.expressions.validComparator.test(c);
+                     
+                      return isValid; });
+        //console.print("[orchunk2 filter] " & serialize(orchunk)); 
         return orchunk;
       });
+    //console.print("ret after again: " & serialize(ret));
+    
     ret = arrayfilter(ret,function (c) { return arraylen(c); });
+    //console.print("ret after againx2: " & serialize(ret));
     return ret;
   }
 
@@ -172,68 +159,67 @@ component name="semver" extends="foundry.core" {
     return stars;
   }
 
- 
-  
   // "2.x","2.x.x" --> ">=2.0.0- <2.1.0-"
   // "2.3.x" --> ">=2.3.0- <2.4.0-"
   public any function _replaceXRanges(ranges) {
-    console.print("should be " & ranges);
+    //console.print("should be " & ranges);
     ranges = resplit("\s+",ranges);
-    //writeDump(var=ranges,abort=true);
+    
     ranges = _map(ranges,this._replaceXRange);
+
     ranges = arrayToList(ranges," ");
     return ranges;
   }
 
   public any function _replaceXRange (version) {
+    //console.print("#chr(10)#= XRANGE START");
+    //console.print("args: " & serialize(arguments));
     version = trim(version);
-    var v = version;
-    var replacer = function (v,gtlt, M, n, p, t) {
-      console.print("xrange replacer args: " & serialize(arguments));
-      var anyX = isNull(M) ||  _.isEmpty(M) || (M.toLowerCase() EQ "x") || M EQ "*" 
-                 || isNull(n) || _.isEmpty(n) || (n.toLowerCase() EQ "x") || n EQ "*"
-                 || isNull(p) || _.isEmpty(p) || (p.toLowerCase() EQ "x") || p EQ "*"
-      var ret = v;
-      console.log("anyX: " & anyX);
-      
-      if (structKeyExists(arguments,'gtlt') && anyX) {
-        // just replace x'es with zeroes
-        if(isNull(M) || _.isEmpty(M) || M EQ "*" || (M.toLowerCase() EQ "x")) M = 0;
-        if(isNull(n) || _.isEmpty(n) || n EQ "*" || (n.toLowerCase() EQ "x")) n = 0;
-        if(isNull(p) || _.isEmpty(p) || p EQ "*" || (p.toLowerCase() EQ "x")) p = 0;
+    return this.expressions.parseXRange.replace(version,function (v,gtlt, M, n, p, t) {
+          //console.print("#chr(10)#===== XRANGE REPLACER START")
+          //console.print(serialize(arguments));
+
+          var anyX = _.isEmpty(M) || M.toLowerCase() EQ "x" || M EQ "*"
+                     || _.isEmpty(n) || n.toLowerCase() EQ "x" || n EQ "*"
+                     || _.isEmpty(p) || p.toLowerCase() EQ "x" || p EQ "*";
+          var ret = v;
+          ////console.print()
+          ////console.print("gtlt: " & gtlt.toString());
+          if (!_.isEmpty(gtlt) && anyX) {
+            // just replace x'es with zeroes
+            if(_.isEmpty(M) || M EQ "*" || M.toLowerCase() EQ "x") M = 0;
+            if(_.isEmpty(n) || n EQ "*" || n.toLowerCase() EQ "x") n = 0;
+            if(_.isEmpty(p) || p EQ "*" || p.toLowerCase() EQ "x") p = 0;
+            
+            ret = gtlt & M &"."&n&"."&p&"-";
+            //console.print("firstif ret: " & serialize(ret));
+            //console.print("===== REPLACER END#chr(10)#");
+          } else if (_.isEmpty(M) || M EQ "*" || M.toLowerCase() EQ "x") {
+            ret = "*";
+            //console.print("secif ret: " & serialize(ret));
+            //console.print("===== REPLACER END#chr(10)#");
+          } else if (_.isEmpty(n) || n EQ "*" || n.toLowerCase() EQ "x") {
+            // append "-" onto the version, otherwise
+            // "1.x.x" natches "2.0.0beta", since the tag
+            // *lowers* the version value
+            ret = ">="&M&".0.0- <"&(+M+1)&".0.0-";
+            //console.print("thirdif ret: " & serialize(ret));
+            //console.print("===== REPLACER END#chr(10)#");
+          } else if (_.isEmpty(p) || p EQ "*" || p.toLowerCase() EQ "x") {
+            ret = ">="&M&"."&n&".0- <"&M&"."&(+n+1)&".0-";
+            //console.print("fourthif ret: " & serialize(ret));
+            //console.print("===== REPLACER END#chr(10)#");
+          } else {
+            //console.print("noif ret: " & serialize(ret));
+            //console.print("#chr(10)#===== XRANGE REPLACER END");
+          }
+        //console.print("#chr(10)#===== XRANGE END");
+        //console.print(serialize(ret));
+        return ret;
+    });
+
         
-        ret = gtlt & M & "." & n & "." & p &"-"
-
-      } else if (isNull(M) || _.isEmpty(M) || M EQ "*" || M.toLowerCase() EQ "x") {
-        ret = "*" // allow any
-      } else if (isNull(n) || _.isEmpty(n) || n EQ "*" || n.toLowerCase() EQ "x") {
-        // append "-" onto the version, otherwise
-        // "1.x.x" matches "2.0.0beta", since the tag
-        // *lowers* the version value
-        ret = ">="&M&".0.0- <"&(+M+1)&".0.0-"
-      } else if (isNull(p) || _.isEmpty(p) || p EQ "*" || p.toLowerCase() EQ "x") {
-        ret = ">="&M&"."&n&".0- <"&M&"."&(+n+1)&".0-"
-      }
-      //console.error("parseXRange", [].slice.call(arguments), ret)
-      console.print("result of replacer: " & ret.toString());
-      return ret;
-    };
-
-    console.print("version: " & version);
-    var matches = this.regexps.parseXRange.match(version);
-    var replacerArgs = {
-      'v':!isNull(matches[0])? matches[0] : '',
-      'gtlt':!isNull(matches[1])? matches[1] : '',
-      'M':!isNull(matches[2])? matches[2] : '',
-      'n':!isNull(matches[3])? matches[3] : '',
-      'p':!isNull(matches[4])? matches[4] : '',
-      't':!isNull(matches[5])? matches[5] : '',
-    }
-    var result = replacer(argumentCollection=replacerArgs);
-    version = rereplace(version,this.expressions.parseXRange,result);
-    console.print("now version: " & version);
-    return version;
-  }
+  };
 
   // ~, ~> --> * (any, kinda silly)
   // ~2, ~2.x, ~2.x.x, ~>2, ~>2.x ~>2.x.x --> >=2.0.0 <3.0.0
@@ -243,46 +229,55 @@ component name="semver" extends="foundry.core" {
   // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0
   public any function _replaceSpermies (version) {
     version = trim(version);
-    var replacer = function (v,gtlt, M, m, p, t) {
-      if (structKeyExists(arguments,'gtlt') AND !isNull(gtlt) AND !_.isEmpty(gtlt)) throw (
-        "Using '"&gtlt&"' with ~ makes no sense. Don't do it.");
+    //console.print("#chr(10)#= SPERMS START");
+    //console.print("args: " & serialize(arguments));
 
-      if (isNull(M) || LCase(M) EQ "x") {
-        return "";
-      }
-      // ~1 == >=1.0.0- <2.0.0-
-      if (isNull(n) || LCase(n) EQ "x") {
-        return ">="&M&".0.0- <"& (M + 1) & ".0.0-";
-      }
-      // ~1.2 == >=1.2.0- <1.3.0-
-      if (isNull(p) || LCase(p) EQ "x") {
-        return ">="&M&"."&n&".0- <"&M&"."& (n + 1) & ".0-";
-      }
-      // ~1.2.3 == >=1.2.3- <1.3.0-
-      t = !isNull(t)? t : "-"
-      return ">="&M&"."&n&"."&p&t&" <"&M&"."&(n+1)&".0-";
-    };
+    ////console.print("version: " & version);
+    return this.expressions.parseSpermy.replace(version,function (v,gtlt, M, n, p, t) {
+            //console.print("#chr(10)#===== SPERM REPLACER START")
+            //console.print(serialize(arguments));
+            
+            gtlrExists = (!isNull(gtlt) AND !_.isEmpty(gtlt));
+            
+            if (gtlrExists) throw ("Using '" & gtlt & "' with ~ makes no sense. Don't do it.");
 
-    console.print("version: " & version);
-    var matches = this.regexps.parseSpermy.match(version);
-    var replacerArgs = {
-        'v':!isNull(matches[0])? matches[0] : '',
-        'gtlt':!isNull(matches[1])? matches[1] : '',
-        'M':!isNull(matches[2])? matches[2] : '',
-        'n':!isNull(matches[3])? matches[3] : '',
-        'p':!isNull(matches[4])? matches[4] : '',
-        't':!isNull(matches[5])? matches[5] : '',
-      }
-    var result = replacer(argumentCollection=replacerArgs);
-    version = rereplace(version,this.expressions.parseXRange,result);
-    console.print("now version: " & version);
-    return version;
+            if (isNull(M) || _.isEmpty(M) || LCase(M) EQ "x") {
+              //console.print("M: " & "");
+              //console.print("===== REPLACER END#chr(10)#");
+              return "";
+            }
+
+            // ~1 == >=1.0.0- <2.0.0-
+            if (isNull(n) || _.isEmpty(n) || LCase(n) EQ "x") {
+              //console.print("return: " & ">="&M&".0.0- <" & (+M + 1) & ".0.0-");
+              //console.print("===== REPLACER END#chr(10)#");
+              return ">="&M&".0.0- <" & (+M + 1) & ".0.0-";
+            }
+
+            // ~1.2 == >=1.2.0- <1.3.0-
+            if (isNull(p) || _.isEmpty(p) || LCase(p) EQ "x") {
+              //console.print("return: " & ">="&M&"."&n&".0- <"&M&"." & (+n + 1) & ".0-");
+              //console.print("===== REPLACER END#chr(10)#");
+              return ">="&M&"."&n&".0- <"&M&"." & (+n + 1) & ".0-";
+            }
+
+            // ~1.2.3 == >=1.2.3- <1.3.0-
+            t = !isNull(t) AND !_.isEmpty(t)? t : "-";
+            //console.print("return: " & ">="&M&"."&n&"."&p&t&" <"&M&"."&(+n+1)&".0-");
+            //console.print("===== REPLACER END#chr(10)#");
+            return ">="&M&"."&n&"."&p&t&" <"&M&"."&(+n+1)&".0-";
+    });
   }
 
   public any function _validRange (range) {
+    //console.print("|||||||||||||||||||||||||||||");
     range = _replaceStars(range);
+    //console.print("validRange BEFORE: " & serialize(range));
     var c = toComparators(range);
-    return (len(c) EQ 0) ? null : arrayToList(_map(c,function (c) { return arrayToList(c," "); }),"||");
+    //console.print("validRange AFTER: " & serialize(c));
+
+    //console.print("|||||||||||||||||||||||||||||");
+    return (arrayLen(c) EQ 0) ? '' : arrayToList(_map(c,function (c) { return arrayToList(c," "); }),"||");
   }
 
   // returns the highest satisfying version in the list, or undefined
@@ -295,11 +290,17 @@ component name="semver" extends="foundry.core" {
   }
 
   public any function satisfies (version, range) {
-    console.print("satisfies('" & version & "','" & range & "');");
+    //console.print("satisfies('" & version & "','" & range & "');");
     version = valid(version);
-    if (!version) return false;
+    if (isBoolean(version)) return false;
+
+    //console.print("version: " & version);
+    //console.print("range: " & range.toString());
+
+    //console.print("range before: " & serialize(range));
     range = toComparators(range);
 
+    //console.print("range after: " & serialize(range));
     var i = 0;
     var l = arrayLen(range);
 
@@ -307,21 +308,33 @@ component name="semver" extends="foundry.core" {
       var ok = false;
       var ll = arrayLen(range[i]);
       for (var j = 1; j <= ll ; j ++) {
+
+      //console.print("------------");
         var r = range[i][j];
-        var gtlt = mid(r,1,1) EQ ">" ? gt
-                 : mid(r,1,1) EQ "<" ? lt
+        var gtlt = !_.isEmpty(r) AND r.charAt(0) EQ ">" ? gt
+                 : !_.isEmpty(r) AND r.charAt(0) EQ "<" ? lt
                  : false;
+        //console.print("r: " & serialize(r));
+        //console.print("gtlt: " & serialize(gtlt.toString()));
+        
         if(_.isFunction(gtlt)) gtltDef = true;
         else gtltDef = false;
 
-        console.print("r: " & r);
-        var eq = len(r) GT 0? (r.charAt(!!gtltDef) EQ "=") : false;
+        var eq = len(r) GT 0? (r.charAt(!!gtltDef) EQ javaCast('string',"=")) : false;
+        ////console.print("charAt: " & serialize(javaCast('string',r.charAt(!!gtltDef))));
+        //console.print("eq: " & serialize(eq));
         var sub = (!!eq) + (!!gtltDef);
+        //console.print("sub: " & serialize(sub));
+        //console.print("r: " & serialize(r));
 
         if (!gtltDef) eq = true;
         r = r.substring(sub);
-        r = (r EQ "") ? r : valid(r);
-        ok = (r EQ "") || (eq && r EQ version) || (gtltDef && gtlt(version, r));
+        //console.print("r: " & serialize(r));
+        r = (trim(r) EQ "") ? r : valid(r);
+        //console.print("r: " & serialize(r));
+        //console.print("#version# #gtlt.toString()# #r#");
+        ok = (r EQ "") || (eq && r EQ version) || (_.isFunction(gtlt) && gtlt(version,r));
+        //console.print("ok: " & serialize(ok));
         if (!ok) break;
       }
       if (ok) return true;
@@ -329,7 +342,9 @@ component name="semver" extends="foundry.core" {
     return false;
   };
 
-  // // return v1 > v2 ? 1 : -1
+
+
+  // return v1 > v2 ? 1 : -1
   public any function _compare (v1, v2) {
     var g = gt(v1, v2);
     return ((g EQ null) ? 0 : g) ? 1 : 0;
@@ -386,31 +401,39 @@ component name="semver" extends="foundry.core" {
       : (compare(tag1,tag2) EQ 1);
     return tagResult;
   }
+  
+  function num (v) {
+   return isNull(v) ? -1 : ReReplaceNoCase(v,"[^0-9]","","ALL");
+  }
 
   public any function _inc (version, release) {
-    version = this.parse(version);
-    if (!version) return null;
+    //console.print('args: ' & serialize(arguments));
 
-    var parsedIndexLookup = { 
-        'major': 1
+    version = this.expressions.parse.match(version);
+
+    if (structCount(version) LTE 0) return '';
+
+    var parsedIndexLookup =
+      { 'major': 1
       , 'minor': 2
       , 'patch': 3
-      , 'build': 4 
-    }
-    var incIndex = parsedIndexLookup[release];
-    if (!isDefined(incIndex)) return null;
+      , 'build': 4 }
+    
+    if (!structKeyExists(parsedIndexLookup,release)) return '';
+    var incIndex = parsedIndexLookup[release]
 
-    var current = _num(version[incIndex])
-    version[incIndex] = (current EQ -1) ? 1 : current + 1;
+
+    var current = num((!structKeyExists(version,incIndex)? 0 : version[incIndex]));
+    version[incIndex] = current === -1 ? 1 : current + 1;
 
     for (var i = incIndex + 1; i < 5; i ++) {
-      if (_num(version[i]) NEQ -1) version[i] = "0";
+      if (structKeyExists(version,i) AND num(version[i]) !== -1) version[i] = "0";
     }
 
-    if (version[4]) version[4] = "-" + version[4];
+    if (structKeyExists(version,'4') AND version[4]) version[4] = "-" & version[4];
     version[5] = "";
 
-    return stringify(version);
+    return _stringify(version);
   }
 
    public array function _map(obj,iterator = _.identity, this = {}) {
@@ -458,4 +481,19 @@ component name="semver" extends="foundry.core" {
   public any function regexp_escape(str) {
     return rereplacenocase(arguments.str,"^([.?*+^$[\]\\(){}|-])","\1","all");
   }
+
+  public struct function arrayCollection(array arr) {
+    var local = {};
+    local.keys = createObject( "java", "java.util.LinkedHashMap" ).init();
+
+    for(var i=1; i <= arrayLen(arguments.arr); i++) {
+      if (arrayIsDefined( arguments.arr, i)) {
+        local.keys.put(javaCast( "string", i),arguments.arr[i]);
+      };
+    };
+   
+    return local.keys;
+  }
+
+  private void function returnNull() {}
 }
