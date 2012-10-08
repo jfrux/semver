@@ -3,9 +3,9 @@ component name="semver" extends="foundry.core" {
     // See http://semver.org/
     // This implementation is a *hair* less strict in that it allows
     // v1.2.3 things, and also tags that don't begin with a char.
-    variables._ = require("util").init();
+    variables._ = require("util");
     
-    variables.console = new foundry.core.console();
+    variables.console = require("console");
     
     variables.ver = "\s*[v=]*\s*([0-9]+)"        // major
                    & "\.([0-9]+)"                  // minor
@@ -27,12 +27,12 @@ component name="semver" extends="foundry.core" {
     this.validRange = this._validRange;
 
     this['expressions'] = { 
-      'parse' : new foundry.core.regexp("^\s*"&ver&"\s*$")
-      ,'parsePackage' : new foundry.core.regexp("^\s*([^\/]+)[-@](" &ver&")\s*$")
-      ,'parseRange' : new foundry.core.regexp("^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
-      ,'validComparator' : new foundry.core.regexp("^"&exprComparator&"$")
-      ,'parseXRange' : new foundry.core.regexp("^"& xRange &"$")
-      ,'parseSpermy' : new foundry.core.regexp("^"& exprSpermy &"$")
+      'parse' : require("regexp","^\s*"&ver&"\s*$")
+      ,'parsePackage' : require("regexp","^\s*([^\/]+)[-@](" &ver&")\s*$")
+      ,'parseRange' : require("regexp","^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
+      ,'validComparator' : require("regexp","^"&exprComparator&"$")
+      ,'parseXRange' : require("regexp","^"& xRange &"$")
+      ,'parseSpermy' : require("regexp","^"& exprSpermy &"$")
     }
 
     variables.rangeReplace = ">=\1 <=\7"
@@ -45,7 +45,7 @@ component name="semver" extends="foundry.core" {
     // ">1.0.2 <2.0.0" like 1.0.3 - 1.9999.9999
     variables.starExpression = "(<|>)?=?\s*\*";
     variables.starReplace = "";
-    variables.compTrimExpression = new foundry.core.regexp("((<|>)?=?)\s*("&ver&"|"&xRangePlain&")");
+    variables.compTrimExpression = require("regexp","((<|>)?=?)\s*("&ver&"|"&xRangePlain&")");
     variables.compTrimReplace = "\1\3";
 
     return this;
