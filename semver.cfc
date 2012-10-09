@@ -11,9 +11,9 @@ component name="semver" extends="foundry.core" {
                    & "\.([0-9]+)"                  // minor
                    & "\.([0-9]+)"                  // patch
                    & "(-[0-9]+-?)?"                 // build
-                   & "([a-zA-Z-+][a-zA-Z0-9-\.:]*)?" // tag
+                   & "([a-zA-Z-+][a-zA-Z0-9-\.:]*)?"; // tag
     
-    variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$"
+    variables.exprComparator = "^((<|>)?=?)\s*("&ver&")$|^$";
     
     variables.xRangePlain = "[v=]*([0-9]+|x|X|\*)"
                           & "(?:\.([0-9]+|x|X|\*)"
@@ -26,16 +26,16 @@ component name="semver" extends="foundry.core" {
 
     this.validRange = this._validRange;
 
-    this['expressions'] = { 
+    this['expressions'] = {
       'parse' : require("regexp","^\s*"&ver&"\s*$")
       ,'parsePackage' : require("regexp","^\s*([^\/]+)[-@](" &ver&")\s*$")
       ,'parseRange' : require("regexp","^\s*(" & ver & ")\s+-\s+(" & ver & ")\s*$")
       ,'validComparator' : require("regexp","^"&exprComparator&"$")
       ,'parseXRange' : require("regexp","^"& xRange &"$")
       ,'parseSpermy' : require("regexp","^"& exprSpermy &"$")
-    }
+    };
 
-    variables.rangeReplace = ">=\1 <=\7"
+    variables.rangeReplace = ">=\1 <=\7";
 
     // range can be one of:
     // "1.0.3 - 2.0.0" range, inclusive, like ">=1.0.3 <=2.0.0"
@@ -125,7 +125,7 @@ component name="semver" extends="foundry.core" {
     
     if(_.isEmpty(ret)) ret = [""];
     ret = _map(ret,function (orchunk) {
-            var orchunk = arguments.orchunk;
+            //orchunk = arguments.orchunk;
             orchunk = listToArray(orchunk," ");
             orchunk = _map(orchunk,this._replaceXRanges);
             orchunk = _map(orchunk,this._replaceSpermies);
@@ -303,8 +303,8 @@ component name="semver" extends="foundry.core" {
 
       //console.print("------------");
         var r = range[i][j];
-        var gtlt = !_.isEmpty(r) AND r.charAt(0) EQ ">" ? gt
-                 : !_.isEmpty(r) AND r.charAt(0) EQ "<" ? lt
+        var gtlt = !_.isEmpty(r) AND r.charAt(0) EQ ">" ? _gt
+                 : !_.isEmpty(r) AND r.charAt(0) EQ "<" ? _lt
                  : false;
         //console.print("r: " & serialize(r));
         //console.print("gtlt: " & serialize(gtlt.toString()));
@@ -312,20 +312,20 @@ component name="semver" extends="foundry.core" {
         if(_.isFunction(gtlt)) gtltDef = true;
         else gtltDef = false;
 
-        var eq = len(r) GT 0? (r.charAt(!!gtltDef) EQ javaCast('string',"=")) : false;
+        var _eq = len(r) GT 0? (r.charAt(!!gtltDef) EQ javaCast('string',"=")) : false;
         ////console.print("charAt: " & serialize(javaCast('string',r.charAt(!!gtltDef))));
-        //console.print("eq: " & serialize(eq));
-        var sub = (!!eq) + (!!gtltDef);
+        //console.print("_eq: " & serialize(_eq));
+        var sub = (!!_eq) + (!!gtltDef);
         //console.print("sub: " & serialize(sub));
         //console.print("r: " & serialize(r));
 
-        if (!gtltDef) eq = true;
+        if (!gtltDef) _eq = true;
         r = r.substring(sub);
         //console.print("r: " & serialize(r));
         r = (trim(r) EQ "") ? r : valid(r);
         //console.print("r: " & serialize(r));
         //console.print("#version# #gtlt.toString()# #r#");
-        ok = (r EQ "") || (eq && r EQ version) || (_.isFunction(gtlt) && gtlt(version,r));
+        ok = (r EQ "") || (_eq && r EQ version) || (_.isFunction(gtlt) && gtlt(version,r));
         //console.print("ok: " & serialize(ok));
         if (!ok) break;
       }
@@ -338,7 +338,7 @@ component name="semver" extends="foundry.core" {
 
   // return v1 > v2 ? 1 : -1
   public any function _compare (v1, v2) {
-    var g = gt(v1, v2);
+    var g = _gt(v1, v2);
     return ((g EQ null) ? 0 : g) ? 1 : 0;
   }
 
@@ -346,26 +346,26 @@ component name="semver" extends="foundry.core" {
     return compare(v2, v1);
   }
 
-  public any function lt (v1, v2) { return gt(v2,v1); }
-  public any function gte (v1, v2) { return !lt(v1,v2); }
-  public any function lte (v1, v2) { return !gt(v1,v2); }
-  public any function eq (v1, v2) { return (!gt(v1,v2) AND !lt(v1,v2)); }
-  public any function neq (v1, v2) { return (gt(v1, v2) OR lt(v1, v2)); }
-  public any function cmp (v1, c, v2) {
+  public any function _lt (v1, v2) { return _gt(v2,v1); }
+  public any function _gte (v1, v2) { return !_lt(v1,v2); }
+  public any function _lte (v1, v2) { return !_gt(v1,v2); }
+  public any function _eq (v1, v2) { return (!_gt(v1,v2) AND !_lt(v1,v2)); }
+  public any function _neq (v1, v2) { return (_gt(v1, v2) OR _lt(v1, v2)); }
+  public any function _cmp (v1, c, v2) {
     switch (c) {
-      case ">": return gt(v1, v2);
-      case "<": return lt(v1, v2);
-      case ">=": return gte(v1, v2);
-      case "<=": return lte(v1, v2);
-      case "==": return eq(v1, v2);
-      case "!=": return neq(v1, v2);
+      case ">": return _gt(v1, v2);
+      case "<": return _lt(v1, v2);
+      case ">=": return _gte(v1, v2);
+      case "<=": return _lte(v1, v2);
+      case "==": return _eq(v1, v2);
+      case "!=": return _neq(v1, v2);
       case "EQ": return (v1 EQ v2);
       case "NEQ": return (v1 NEQ v2);
       default: throw("Y U NO USE VALID COMPARATOR!? " & c);
     };
   }
 
-  public any function gt () {
+  public any function _gt () {
     v1 = this.parse(arguments[1]);
     v2 = this.parse(arguments[2]);
     if (structCount(v1) EQ 0 || structCount(v2) EQ 0) return false;
@@ -394,7 +394,7 @@ component name="semver" extends="foundry.core" {
     return tagResult;
   }
   
-  function num (v) {
+  function _num (v) {
    return isNull(v) ? -1 : ReReplaceNoCase(v,"[^0-9]","","ALL");
   }
 
@@ -405,21 +405,20 @@ component name="semver" extends="foundry.core" {
 
     if (structCount(version) LTE 0) return '';
 
-    var parsedIndexLookup =
-      { 'major': 1
+    var parsedIndexLookup = { 'major': 1
       , 'minor': 2
       , 'patch': 3
-      , 'build': 4 }
+      , 'build': 4 };
     
     if (!structKeyExists(parsedIndexLookup,release)) return '';
-    var incIndex = parsedIndexLookup[release]
+    var incIndex = parsedIndexLookup[release];
 
 
-    var current = num((!structKeyExists(version,incIndex)? 0 : version[incIndex]));
-    version[incIndex] = current === -1 ? 1 : current + 1;
+    var current = _num((!structKeyExists(version,incIndex))? 0 : version[incIndex]);
+    version[incIndex] = current EQ -1 ? 1 : current + 1;
 
     for (var i = incIndex + 1; i < 5; i ++) {
-      if (structKeyExists(version,i) AND num(version[i]) !== -1) version[i] = "0";
+      if (structKeyExists(version,i) AND _num(version[i]) NEQ -1) version[i] = "0";
     }
 
     if (structKeyExists(version,'4') AND version[4]) version[4] = "-" & version[4];
