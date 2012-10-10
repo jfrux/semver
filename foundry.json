@@ -1,9 +1,0 @@
-{
-	"name":"semver",
-	"description":"parses semantic versions",
-	"version":"0.0.1",
-	"main":"./semver",
-	"dependencies": {
-		"UnderscoreCF":""
-	}
-}
