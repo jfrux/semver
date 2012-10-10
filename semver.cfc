@@ -95,7 +95,7 @@ component name="semver" extends="foundry.core" {
     }
 
   public any function valid (version) {
-    if (!_.isString(version)) return null;
+    if (!_.isString(version)) return returnNull();
     parsedVersion = this.expressions.parse.match(version);
     version = trim(version);
     version = reReplace(version,"^[v=]+","");
@@ -107,7 +107,7 @@ component name="semver" extends="foundry.core" {
   }
 
   public any function _validPackage (version) {
-    if (!_.isString(version)) return null;
+    if (!_.isString(version)) return returnNull();
     var matchedVersion = expressions.parsePackage.match(version);
     return matchedVersion && trim(version);
   }
